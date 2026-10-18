@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline';style-src 'unsafe-inline';img-src data: https:;connect-src wss://irc-ws.chat.twitch.tv https://decapi.me">
+<title>Лототрон</title>
+<style>
+:root{--bg:#0b1020;--s1:#121a30;--s2:#1b2542;--tx:#eef2ff;--mu:#94a3c4;--ac:#6366f1;--ac2:#22d3ee;--bd:#2a3558;color-scheme:dark}
+[data-theme=light]{--bg:#f3f5fb;--s1:#fff;--s2:#eef1fa;--tx:#111827;--mu:#5b6478;--ac:#4f46e5;--ac2:#0891b2;--bd:#d6dbea;color-scheme:light}
+[data-theme=neon]{--bg:#05010f;--s1:#0d0422;--s2:#190844;--tx:#f5e9ff;--mu:#a78bd0;--ac:#ff2bd6;--ac2:#00f0ff;--bd:#3b1a7a}
+*{box-sizing:border-box;margin:0}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+button,select,input,textarea{font:inherit;color:inherit;background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;min-height:44px;min-width:0}
+input[type=checkbox]{min-height:0;width:18px;height:18px;padding:0;accent-color:var(--ac)}
+button{cursor:pointer;transition:.15s}button:hover{border-color:var(--ac)}button:disabled{opacity:.45;cursor:not-allowed}
+button.p{background:linear-gradient(135deg,var(--ac),var(--ac2));border:0;color:#fff;font-weight:700}
+header{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:14px clamp(14px,3vw,32px);background:var(--s1);border-bottom:1px solid var(--bd)}
+h1{font-size:1.4rem;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.seg{display:flex;gap:4px;padding:4px;background:var(--s2);border-radius:14px}.seg button{border:0;background:none}.seg .on{background:var(--ac);color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>input,.row>select{flex:1 1 160px}
+.col{display:flex;flex-direction:column;gap:12px}
+main{display:grid;gap:24px;grid-template-columns:minmax(0,1.2fr) minmax(320px,1fr);max-width:1500px;margin:auto;padding:clamp(14px,3vw,32px)}
+@media(max-width:960px){main{grid-template-columns:1fr}}
+.card{display:flex;flex-direction:column;gap:16px;padding:clamp(16px,2.5vw,28px);background:var(--s1);border:1px solid var(--bd);border-radius:20px;align-self:start}
+.stage{align-items:center;text-align:center}
+.wheel{position:relative;width:min(100%,70vh,620px);aspect-ratio:1}
+.wheel canvas{width:100%;height:100%;border-radius:50%;border:6px solid var(--ac);box-shadow:0 0 40px color-mix(in srgb,var(--ac) 40%,transparent)}
+.ptr{position:absolute;top:-12px;left:50%;z-index:2;transform:translateX(-50%);border:14px solid transparent;border-top:26px solid var(--ac2);border-bottom:0}
+.tape{display:none;position:relative;width:100%;height:clamp(130px,24vw,170px);overflow:hidden;border:2px solid var(--ac);border-radius:18px;background:var(--s2)}
+.trk{position:absolute;top:0;left:0;height:100%;display:flex;will-change:transform}
+.cp{display:flex;flex:none;height:100%}
+.cd{position:relative;flex:none;height:100%;display:flex;align-items:flex-end;overflow:hidden;background:var(--s2);border-right:1px solid #0006;border-bottom:6px solid var(--c);transition:transform .08s,filter .08s}
+.cd.hot{transform:scale(1.06);filter:brightness(1.25);z-index:2}.cd.win{outline:4px solid var(--ac2);outline-offset:-4px}
+.cd .av{position:absolute;inset:0;width:100%;height:100%;border-radius:0;font-size:56px}
+.cd b{position:relative;width:100%;padding:14px 4px 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:.85rem;color:#fff;text-shadow:0 1px 4px #000;background:linear-gradient(transparent,#000a)}
+.mk{position:absolute;left:50%;top:0;bottom:0;width:4px;z-index:4;transform:translateX(-50%);background:var(--ac2);box-shadow:0 0 14px var(--ac2)}
+body[data-m=tape] .wheel,body[data-m=wheel] [data-for=tape],body[data-m=tape] [data-for=wheel]{display:none!important}
+body[data-m=tape] .tape{display:block}
+#out{min-height:1.6em;font-size:clamp(1.2rem,3vw,1.8rem);font-weight:800;word-break:break-word}
+#go{padding:14px 40px;font-size:1.2rem}
+.spin-settings{width:100%;justify-content:center;gap:12px}
+.spin-settings .seg{align-items:center}
+.spin-settings .seg button{min-width:100px}
+.spin-settings .seg button[aria-pressed="true"]{background:var(--ac);color:#fff}
+#stopAuto[hidden]{display:none!important}
+.mode-note{width:100%;max-width:44rem;color:var(--mu);font-size:.9rem;text-align:left}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.av{display:grid;place-items:center;width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--s2);font-weight:700}
+.bi{width:18px;height:18px;vertical-align:middle}
+ul{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto;padding:0;list-style:none}
+li{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border-radius:12px}
+li .nm{flex:1;overflow:hidden;text-overflow:ellipsis}li button{min-height:32px;padding:2px 10px}
+fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;padding:12px;border:1px solid var(--bd);border-radius:14px}
+fieldset label{display:flex;align-items:center;gap:8px}small{color:var(--mu)}
+dialog{width:min(480px,92vw);padding:24px;color:var(--tx);background:var(--s1);border:2px solid var(--ac);border-radius:20px}
+dialog::backdrop{background:#0009}
+.bar{flex:1;height:10px;overflow:hidden;border-radius:9px;background:var(--s2)}.bar i{display:block;width:0;height:100%;background:var(--ac2);transition:width 1s linear}
+.msgs{max-height:140px;overflow:auto;font-size:.9rem;word-break:break-word}.pre{opacity:.55}
+.chat{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto;font-size:.9rem;word-break:break-word}.chat .in{background:color-mix(in srgb,var(--ac) 14%,transparent);border-radius:6px}
+.mx{width:64px;min-height:34px;margin-left:auto;padding:4px 8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎰 Лототрон</h1>
+  <div class="seg" id="modes"><button data-m="wheel">🎡 Колесо Фортуни</button><button data-m="tape">🎞 Рухома стрічка</button></div>
+  <div class="row">
+    <select id="speed" title="Швидкість обертання"><option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select>
+    <select id="theme" title="Тема"><option value="dark">Темна</option><option value="light">Світла</option><option value="neon">Неон</option></select>
+    <button id="snd" title="Звук">🔊</button>
+  </div>
+</header>
+<main>
+  <section class="card stage">
+    <div class="wheel"><i class="ptr"></i><canvas id="cv" width="640" height="640"></canvas></div>
+    <div class="tape" id="tp"><div class="trk" id="trk"></div><i class="mk"></i></div>
+    <output id="out"></output>
+    <div class="row spin-settings" aria-label="Керування обертанням">
+      <span><strong>Режим спінів:</strong></span>
+      <div class="seg" id="spinModes" role="group" aria-label="Режим спінів">
+        <button type="button" data-spin="manual" class="on" aria-pressed="true">🖐 Ручний</button>
+        <button type="button" data-spin="auto" aria-pressed="false">🤖 Авто</button>
+      </div>
+    </div>
+    <div class="row"><button class="p" id="go">🎯 Крутити</button><button id="stopAuto" hidden>⏹ Зупинити авто</button><button id="pause" disabled>⏸ Пауза</button><button id="undo" disabled>↩ Скасувати</button></div>
+    <div class="col" style="width:100%;max-width:44rem;gap:4px;text-align:left">
+      <label class="row" for="rm"><input type="checkbox" id="rm" checked> <strong>Режим вибування</strong></label>
+      <small class="mode-note">Увімкнено — після кожного результату вибуває лише один квиток. Учасник із кількома квитками залишається в пулі, доки не буде витягнуто останній квиток.</small>
+    </div>
+  </section>
+  <aside class="card">
+    <div class="col" data-for="wheel">
+      <textarea id="ta" rows="5" placeholder="Ім'я або «Ім'я;квитки» — по одному в рядок"></textarea>
+      <div class="row"><button class="p" id="add">➕ Додати</button><button id="fbtn">📄 Файл</button><button id="clr">🗑 Очистити</button><input type="file" id="file" accept=".txt,.csv" hidden></div>
+    </div>
+    <div class="col" data-for="tape">
+      <div class="row"><input id="ch" placeholder="Канал Twitch або посилання" autocomplete="off"><button id="conn">Підключитися</button></div>
+      <label class="row"><input type="checkbox" id="any" checked> Будь-яке повідомлення = участь</label>
+      <input id="kw" value="!join" placeholder="Слово для участі" autocomplete="off">
+      <button class="p" id="open" disabled>▶ Відкрити набір</button>
+      <small id="tst">відключено</small>
+      <div class="row"><label class="row"><input type="checkbox" id="mxa"> Однаковий множник квитків для всіх</label><input type="number" id="mxg" min="1" max="50" value="1" style="max-width:90px"></div>
+      <small>Інакше — множник біля кожної ролі (для кількох ролей береться найбільший).</small>
+      <fieldset id="roles"><legend>Ролі:</legend></fieldset>
+      <details open><summary>💬 Чат каналу</summary><div class="chat" id="chat"></div></details>
+      <button id="clr2">🗑 Очистити набір</button>
+    </div>
+    <h3>Учасники <small id="cnt">0</small></h3><ul id="list"></ul>
+    <div class="section-head"><h3>Переможці</h3><button id="clearWinners" type="button">🧹 Очистити всіх переможців</button></div>
+    <ul id="hist"></ul>
+  </aside>
+</main>
+<dialog id="win">
+  <div class="col">
+    <h3>🏆 Переможець</h3>
+    <div class="row" id="wu"></div>
+    <div class="row"><b id="wcd"></b><div class="bar"><i id="wbar"></i></div></div>
+    <p id="wst"></p><div class="msgs" id="wmsg"></div>
+    <div class="row"><label class="row">Таймер, с <input type="number" id="wsec" min="0" max="3600" style="max-width:100px"></label><button id="wrs">⏱ Перезапустити</button></div>
+    <div class="row"><button id="rr" class="p">🔁 Рерол</button><button id="wx">Закрити</button></div>
+  </div>
+</dialog>
+<script>
+const $=s=>document.querySelector(s),el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const ls=(k,v)=>{try{return v===undefined?JSON.parse(localStorage.getItem(k)||'null'):localStorage.setItem(k,JSON.stringify(v))}catch{return null}};
+const rnd=()=>crypto.getRandomValues(new Uint32Array(1))[0]/2**32,frac=x=>x-Math.floor(x),col=i=>`hsl(${i*137.5%360} 65% 48%)`;
+const ago=t=>{const s=(Date.now()-t)/1e3;if(s<10)return'щойно';const u=[[60,1,'с'],[3600,60,'хв'],[86400,3600,'год'],[604800,86400,'дн'],[1/0,604800,'тиж']].find(x=>s<x[0]);return`${Math.floor(s/u[1])} ${u[2]} тому`};
+const BD={broadcaster:'5527c58c-fb7d-422d-b71b-f309dcb85cc1',moderator:'3267646d-33f0-4b17-b3df-f923a41db1d0',vip:'b817aba4-fad8-49e2-b88a-7cc744dfa6ec','artist-badge':'4300a897-03dc-4e83-8c0e-c332fee7057f',subscriber:'5d9f2208-5dd8-11e7-8513-2ff4adfae661',staff:'d97c37bd-a6f5-4c38-8f57-4e4bef88af34',partner:'d12a2e27-16f6-41d0-ab77-b780518f00a3',premium:'bbbe0db0-a598-423e-86d0-f9fb98ca1933',founder:'511b78a9-ab37-472f-9569-457753bbe7d3',no_audio:'aef2cd08-f29b-45a1-8c12-d44d7fd5e6f0',no_video:'199a0dba-58f3-494e-a7fc-1fa0a1001fb8'};
+const bimg=k=>{const i=el('img','bi');i.src=`https://static-cdn.jtvnw.net/badges/v1/${BD[k]}/1`;i.alt=k;return i};
+const STUB='https://static-cdn.jtvnw.net/user-default-pictures-uv/de130ab0-def7-11e9-b668-784f43822e80-profile_image-300x300.png',FALL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%236b7280'/%3E%3Ccircle cx='4' cy='3' r='1.5' fill='%23d1d5db'/%3E%3Cpath d='M1 8a3 3 0 0 1 6 0z' fill='%23d1d5db'/%3E%3C/svg%3E";
+const av=u=>{const i=el('img','av');i.src=u?.av||STUB;i.alt='';i.referrerPolicy='no-referrer';i.onerror=()=>{i.onerror=null;i.src=FALL};return i};
+const ROLES=[['viewer','Глядачі','👤'],['sub','Підписники','subscriber'],['vip','VIP','vip'],['mod','Модератори','moderator'],['artist','Артисти','artist-badge'],['follow','Фоловери','💙'],['nofollow','Не фоловери','💔'],['bot','Чатботи','🤖'],['owner','Стрімер','broadcaster']];
+const BOTS=/^(nightbot|streamelements|streamlabs\w*|moobot|fossabot|wizebot|soundalerts|commanderroot|supibot|sery_bot|botrixoficial|nightdev|restreambot)$|bot$/;
+
+const st={speed:1,theme:'dark',snd:1,roles:{viewer:1,sub:1,vip:1,mod:1,artist:1,follow:1,nofollow:1,bot:0,owner:0},reply:60,rm:1,spinMode:'manual',mx:{},mxAll:0,mxG:1,...ls('lt_set'),m:ls('lt_m')==='tape'?'tape':'wheel'};
+if(!['manual','auto'].includes(st.spinMode))st.spinMode='manual';
+const db={wheel:ls('lt_wheel')||[],tape:ls('lt_tape')||[]},hist={wheel:ls('lt_wh')||[],tape:ls('lt_th')||[]};
+const ban=new Set(ls('lt_ban')||[]),users=new Map(db.tape.map(u=>[u.login,u]));
+let ring=[],nReal=0,pos=0,sp=null,paused=0,dirty=0,W=0,P=1,cards=[],hot=-1,cur=null,ws=null,chan='',want=0,collecting=0,retry=0,lastTick=0,fq=[],fbusy=0,ffail=0,ac,tm,ct,tPrev=performance.now();
+let autoRunning=false,autoTimer=0,autoQueued=false;
+const chat=[],undoS={wheel:[],tape:[]};
+
+const save=()=>{ls('lt_set',{speed:st.speed,theme:st.theme,snd:st.snd,roles:st.roles,reply:st.reply,rm:st.rm,spinMode:st.spinMode,mx:st.mx,mxAll:st.mxAll,mxG:st.mxG});ls('lt_m',st.m);ls('lt_wheel',db.wheel);ls('lt_tape',db.tape.slice(-500));ls('lt_wh',hist.wheel.slice(0,100));ls('lt_th',hist.tape.slice(0,100));ls('lt_ban',[...ban])};
+const beep=(f,d,v=.06,dl=0)=>{if(!st.snd)return;try{ac??=new AudioContext();const t=ac.currentTime+dl,o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(1e-4,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch{}};
+
+/* ---- pool & ring: 1 ticket = 1 slot of equal width ---- */
+const tix=u=>{if(st.mxAll)return st.mxG;const m=st.mx,r=['sub','vip','mod','artist'].filter(k=>u[k]);let v=Math.max(...(r.length?r:['viewer']).map(k=>m[k]||1));if(u.bot)v=Math.max(v,m.bot||1);if(u.owner)v=Math.max(v,m.owner||1);if(u.fol!=null)v=Math.max(v,m[u.fol?'follow':'nofollow']||1);return v};
+const can=(u,A)=>{if(u.bot&&!A.bot||u.owner&&!A.owner)return 0;const sp=['mod','vip','artist','sub'].filter(r=>u[r]);if(sp.length?!sp.some(r=>A[r]):!(A.viewer||u.bot||u.owner))return 0;return!(u.fol===true&&!A.follow||u.fol===false&&!A.nofollow)};
+const pool=()=>st.m==='wheel'
+  ?db.wheel.filter(x=>x.t>0).map(x=>({n:x.n,t:x.t}))
+  :db.tape.filter(u=>!ban.has(u.n.toLowerCase())&&can(u,st.roles)).map(u=>{
+      const base=tix(u);
+      if(st.rm&&!Number.isFinite(u.leftT))u.leftT=base;
+      const remaining=Number.isFinite(u.leftT)?Math.max(0,Math.floor(u.leftT)):base;
+      return {n:u.n,t:remaining,u};
+    }).filter(x=>x.t>0);
+const slotsOf=p=>{const o=[];for(let r=0,m=1;m;r++){m=0;p.forEach((x,i)=>{if(x.t>r){o.push({n:x.n,u:x.u,c:i});m=1}})}return o.slice(0,400)};
+const pad=real=>{const S=Math.max(12,real.length),a=Array.from({length:S},()=>({ph:1,n:'?'}));real.forEach((x,k)=>a[Math.floor((k+.5)*S/real.length)]=x);return a};
+function build(p){const real=slotsOf(p);nReal=real.length;ring=st.m==='wheel'?real:pad(real);dirty=0;st.m==='wheel'?drawWheel():drawTape()}
+function drawWheel(){const c=$('#cv'),g=c.getContext('2d'),R=c.width/2,S=ring.length,d=2*Math.PI/S;g.clearRect(0,0,c.width,c.height);
+  if(!S){g.fillStyle='#64748b55';g.beginPath();g.arc(R,R,R,0,7);g.fill();return}
+  ring.forEach((x,i)=>{const a0=i*d-Math.PI/2;g.fillStyle=col(x.c);g.beginPath();g.moveTo(R,R);g.arc(R,R,R,a0,a0+d);g.fill();
+    if(d>.07){g.save();g.translate(R,R);g.rotate(a0+d/2);g.fillStyle='#fff';g.font=`bold ${S>30?13:S>16?17:22}px system-ui`;g.textAlign='right';g.shadowColor='#000';g.shadowBlur=4;g.fillText(x.n.slice(0,18),R-24,6);g.restore()}})}
+function drawTape(){const trk=$('#trk'),vw=$('#tp').clientWidth||600,S=ring.length;trk.textContent='';hot=-1;W=150*S;P=Math.ceil(vw/2/W)+1;
+  const cp=el('div','cp');cp.style.width=W+'px';
+  for(let i=S-1;i>=0;i--){const x=ring[i],c=el('div','cd');c.style.cssText=`width:150px;--c:${col(x.c||0)}`;c.append(av(x.u));if(!x.ph){c.title=x.n;c.append(el('b','',x.n))}cp.append(c)}
+  for(let k=0;k<2*P+1;k++)trk.append(cp.cloneNode(true));trk.style.width=(2*P+1)*W+'px';cards=[...trk.children[P].children];place()}
+const seg=p=>Math.floor(frac(-p)*ring.length);
+function place(){if(st.m==='wheel'){$('#cv').style.transform=`rotate(${pos*360}deg)`;return}if(!W)return;
+  $('#trk').style.transform=`translateX(${$('#tp').clientWidth/2-(P*W+frac(pos)*W)}px)`;const j=ring.length-1-seg(pos);
+  if(j!==hot){cards[hot]?.classList.remove('hot');cards[j]?.classList.add('hot');hot=j}}
+
+/* ---- one animation loop: slow idle drift that never stops + eased spin ---- */
+function frame(now){const dt=Math.min(100,now-tPrev);tPrev=now;
+  if(!paused){
+    if(sp){sp.el+=dt;const k=Math.min(1,sp.el/sp.ms);pos=sp.from+(sp.to-sp.from)*(1-(1-k)**4);const q=seg(pos);if(q!==sp.last){sp.last=q;tick(now)}if(k>=1){const x=sp.s;sp=null;done(x)}}
+    else if(ring.length)pos+=st.m==='wheel'?dt/4e4:dt*.07/W;
+    place()}
+  requestAnimationFrame(frame)}
+function spin(fromAuto=false){
+  if(sp||paused)return;
+  if(autoTimer){clearTimeout(autoTimer);autoTimer=0}
+  if(st.spinMode==='auto'&&!autoRunning&&!fromAuto)autoRunning=true;
+  if(dirty)build(pool());if(!nReal){if(autoRunning)stopAuto();ctl();return}
+  if(collecting){collecting=0;sync()}
+  const S=ring.length,ids=ring.flatMap((x,i)=>x.ph?[]:[i]),i=ids[Math.floor(rnd()*ids.length)],f=(i+.1+.8*rnd())/S,from=pos,turns=st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W));
+  sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed,el:0,last:seg(from),s:ring[i]};
+  $('#out').textContent='???';ctl();
+}
+function tick(now){const dt=now-lastTick;lastTick=now;if(dt<25)return;beep(500+1000/(1+dt/60),.04);
+  (st.m==='wheel'?$('.ptr'):$('.mk')).animate?.(st.m==='wheel'?[{transform:'translateX(-50%) rotate(-14deg)'},{transform:'translateX(-50%)'}]:[{transform:'translateX(-50%) scaleX(3)'},{transform:'translateX(-50%)'}],{duration:110})}
+function done(x){
+  pos=frac(pos);place();[523,659,784,1047].forEach((f,i)=>beep(f,.35,.12,i*.1));
+  const h={n:x.n,t:Date.now()},u={h};$('#out').textContent='🎉 '+x.n;
+  if(st.m==='wheel'){
+    if(st.rm){
+      const index=db.wheel.findIndex(y=>y.n.toLocaleLowerCase()===x.n.toLocaleLowerCase());
+      if(index>=0){const participant=db.wheel[index];u.p={n:participant.n,index};
+        if(participant.t>1)participant.t-=1;else db.wheel.splice(index,1);dirty=1}
+    }
+    hist.wheel.unshift(h);
+  }else{
+    cards[hot]?.classList.add('win');setTimeout(()=>document.querySelectorAll('.cd.win').forEach(c=>c.classList.remove('win')),3e3);
+    if(st.rm&&x.u){
+      const hadLeft=Number.isFinite(x.u.leftT);
+      const left=hadLeft?x.u.leftT:tix(x.u);
+      u.tape={login:x.u.login,left,hadLeft};x.u.leftT=Math.max(0,left-1);dirty=1;
+    }
+    Object.assign(h,{login:x.u.login,state:'wait',sec:st.reply,dl:st.reply?Date.now()+st.reply*1e3:0,msgs:(x.u.recent||[]).map(m=>({...m,pre:1}))});hist.tape.unshift(h);setTimeout(()=>showWin(h),700);
+  }
+  undoS[st.m].push(u);
+  if(st.m==='wheel'&&dirty)build(pool());
+  setTimeout(()=>{if(!sp&&dirty){build(pool());list(pool());ctl()}},2500);
+  list(pool());histUI();ctl();save();
+  if(autoRunning&&st.spinMode==='auto')scheduleAutoSpin(850);
+}
+function scheduleAutoSpin(delay=650){
+  if(!autoRunning||st.spinMode!=='auto')return;
+  if(autoTimer)clearTimeout(autoTimer);
+  autoQueued=false;
+  autoTimer=setTimeout(()=>{
+    autoTimer=0;if(!autoRunning||st.spinMode!=='auto')return;
+    if(paused){autoQueued=true;return}
+    if(st.m==='tape'&&$('#win').open){autoQueued=true;return}
+    const available=pool();
+    if(st.rm&&!available.some(p=>p.t>0)){stopAuto();$('#out').textContent='✅ Режим вибування завершено: квитки закінчилися.';ctl();return}
+    if(!available.some(p=>p.t>0)){stopAuto();ctl();return}
+    spin(true);
+  },delay);
+}
+function stopAuto(showMessage=false){
+  autoRunning=false;autoQueued=false;if(autoTimer){clearTimeout(autoTimer);autoTimer=0}
+  if(showMessage)$('#out').textContent='⏹ Автоматичні спіни зупинено.';
+  ctl();
+}
+function continueAutoIfQueued(){if(autoQueued&&autoRunning&&st.spinMode==='auto'&&!paused){autoQueued=false;scheduleAutoSpin(250)}}
+function undo(){if(sp)return;const u=undoS[st.m].pop();if(!u)return;hist[st.m]=hist[st.m].filter(y=>y!==u.h);
+  if(u.p){
+    const existing=db.wheel.find(y=>y.n.toLocaleLowerCase()===u.p.n.toLocaleLowerCase());
+    if(existing)existing.t+=1;
+    else db.wheel.splice(Math.max(0,Math.min(u.p.index??db.wheel.length,db.wheel.length)),0,{n:u.p.n,t:1});
+  }
+  if(u.tape){const participant=db.tape.find(y=>y.login===u.tape.login);if(participant){if(u.tape.hadLeft)participant.leftT=u.tape.left;else delete participant.leftT}}
+  if(u.ban)ban.delete(u.ban);if(cur===u.h)$('#win').close();$('#out').textContent='↩ Скасовано: '+u.h.n;refresh();histUI();continueAutoIfQueued()}
+
+/* ---- winner dialog (tape) ---- */
+function showWin(h){if(!hist.tape.includes(h))return;cur=h;const d=$('#win');if(!d.open)d.showModal();$('#wsec').value=st.reply;renderWin()}
+function renderWin(light){const h=cur;if(!h||!$('#win').open)return;const left=Math.max(0,h.dl-Date.now()),wait=h.state==='wait',timed=wait&&h.dl;
+  $('#wcd').textContent=timed?`${Math.floor(left/6e4)}:${String(Math.floor(left/1e3)%60).padStart(2,'0')}`:'';
+  $('#wbar').style.width=timed?left/h.sec/10+'%':wait||h.state==='ok'?'100%':'0%';if(light)return;
+  const u=users.get(h.login);$('#wu').replaceChildren(av(u),el('b','',h.n),...(u?u.badges.map(bimg):[]));
+  $('#wst').textContent={wait:h.dl?'⏳ Чекаємо повідомлення в чаті — перевірка активності':'⏳ Чекаємо повідомлення (без ліміту часу)',ok:`✅ Активний(а): відповів(ла) через ${Math.round((h.rt-h.t)/1e3)} с`,late:'⌛ Не відповів(ла) вчасно — зробити рерол?'}[h.state];
+  $('#wmsg').replaceChildren(...h.msgs.map(m=>el('div',m.pre?'pre':'',`${new Date(m.t).toLocaleTimeString('uk-UA')} ${m.x}`)));
+  $('#rr').classList.toggle('p',h.state==='late');
+}
+
+/* ---- twitch chat ---- */
+function connect(){
+  const c=$('#ch').value.trim().toLowerCase().replace(/^.*twitch\.tv\//,'').replace(/\W/g,'');
+  if(c.length<3){$('#out').textContent='Вкажіть коректну назву каналу';return}
+  disc();want=1;chan=c;ffail=0;$('#tst').textContent='підключення…';
+  const w=ws=new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  w.onopen=()=>['CAP REQ :twitch.tv/tags twitch.tv/commands','PASS SCHMOOPIIE','NICK justinfan'+(1e4+Math.floor(rnd()*8e4)),'JOIN #'+c].forEach(x=>w.send(x));
+  w.onmessage=e=>String(e.data).split('\r\n').forEach(l=>l&&line(l));
+  w.onclose=()=>{if(ws!==w)return;ws=null;if(want){$('#tst').textContent='перепідключення…';setTimeout(()=>want&&!ws&&connect(),Math.min(15e3,1e3*2**retry++))}else $('#tst').textContent='відключено';sync()};
+  sync();
+}
+function disc(){want=0;const w=ws;ws=null;w?.close()}
+function line(l){
+  if(l.startsWith('PING')){ws?.send('PONG :tmi.twitch.tv');return}
+  const m=/^(?:@(\S+) )?:(\w+)!\S+ PRIVMSG #\S+ :(.*)$/.exec(l);
+  if(!m){if(/ (366|ROOMSTATE) /.test(l)){retry=0;$('#tst').textContent='#'+chan+' · у мережі';sync()}return}
+  const t=Object.fromEntries((m[1]||'').split(';').map(x=>x.split(/=(.*)/s).slice(0,2))),b=(t.badges||'').split(',').filter(Boolean).map(x=>x.split('/')[0]),login=m[2],tx=m[3].replace(/^\x01ACTION |\x01$/g,'').trim(),n=t['display-name']||login;
+  const roles={sub:+b.includes('subscriber'),vip:+b.includes('vip'),mod:+b.includes('moderator'),artist:+b.includes('artist-badge'),owner:+b.includes('broadcaster'),bot:+BOTS.test(login),badges:b.filter(k=>BD[k])};
+  let u=users.get(login),changed=0;const kw=$('#kw').value.trim().toLowerCase();
+  if(!u&&collecting&&!ban.has(n.toLowerCase())&&($('#any').checked||kw&&tx.toLowerCase().split(/\s+/)[0]===kw)){u={n,login,id:t['user-id'],recent:[]};users.set(login,u);db.tape.push(u);fq.push(u);pump();changed=1}
+  if(u){const sg=JSON.stringify(roles);if(u.sg!==sg){u.sg=sg;changed=1}Object.assign(u,roles);u.recent=[...u.recent.slice(-4),{t:Date.now(),x:tx.slice(0,300)}]}
+  chat.push({n,c:t.color,b:roles.badges,x:tx,in:!!u});if(chat.length>40)chat.shift();
+  const h=hist.tape.find(x=>x.login===login);
+  if(h){h.msgs.push({t:Date.now(),x:tx.slice(0,300)});if(h.state==='wait'){h.state='ok';h.rt=Date.now()}if(h===cur)renderWin();histUI()}
+  clearTimeout(ct);ct=setTimeout(chatUI,300);if(changed){clearTimeout(tm);tm=setTimeout(refresh,300)}
+}
+async function pump(){
+  if(fbusy)return;fbusy=1;const get=async url=>(await(await fetch(url)).text()).trim();
+  while(fq.length&&ffail<4){const u=fq.shift();
+    try{const a=await get(`https://decapi.me/twitch/avatar/${u.login}`);if(/^https:\/\/static-cdn\.jtvnw\.net\//.test(a))u.av=a;
+      const t=await get(`https://decapi.me/twitch/followage/${chan}/${u.login}`);
+      if(/does not follow/i.test(t))u.fol=false;else if(/^\d+\s+(second|minute|hour|day|week|month|year)/i.test(t))u.fol=true;
+      ffail=0;clearTimeout(tm);tm=setTimeout(refresh,300)}catch{ffail++}
+    await new Promise(r=>setTimeout(r,200))}
+  fbusy=0;
+}
+
+/* ---- UI ---- */
+function sync(){const on=!!ws||want;$('#conn').textContent=on?'Відключитися':'Підключитися';$('#open').disabled=!on;$('#open').textContent=collecting?'⏹ Закрити набір':'▶ Відкрити набір';$('#open').classList.toggle('p',!collecting)}
+function list(p){$('#cnt').textContent=p.length;
+  $('#list').replaceChildren(...p.slice(0,300).map(x=>{const li=el('li'),b=el('button','','✖');li.append(el('span','nm',x.n));
+    if(x.u)x.u.badges.forEach(k=>li.append(bimg(k)));if(x.t>1)li.append(el('small','','🎟'+x.t));
+    b.onclick=()=>{if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()};li.append(b);return li}))}
+function histUI(){$('#hist').replaceChildren(...hist[st.m].slice(0,30).map(h=>{const li=el('li'),x=el('button','','✖');
+  li.append(el('span','nm',h.n),el('small','',({ok:'✅ ',late:'⌛ ',wait:'⏳ '}[h.state]||'')+ago(h.t)));
+  if(h.login){li.style.cursor='pointer';li.onclick=()=>showWin(h)}
+  x.onclick=e=>{e.stopPropagation();hist[st.m]=hist[st.m].filter(y=>y!==h);histUI();save()};li.append(x);return li}))}
+function counts(){const c={};for(const u of db.tape){const k=['owner','mod','vip','artist','sub','bot'].filter(r=>u[r]);k.forEach(r=>c[r]=(c[r]||0)+1);
+  if(!k.some(r=>r!=='owner'&&r!=='bot'))c.viewer=(c.viewer||0)+1;if(u.fol===true)c.follow=(c.follow||0)+1;if(u.fol===false)c.nofollow=(c.nofollow||0)+1}
+  ROLES.forEach(([k])=>$('#c_'+k).textContent=c[k]||'')}
+function chatUI(){const C=$('#chat'),end=C.scrollTop+C.clientHeight>=C.scrollHeight-30;
+  C.replaceChildren(...chat.map(m=>{const d=el('div',m.in?'in':''),n=el('b','',m.n);if(m.c)n.style.color=m.c;d.append(...m.b.map(bimg),' ',n,': '+m.x);return d}));if(end)C.scrollTop=C.scrollHeight}
+function ctl(){
+  $('#go').disabled=!!sp||!!paused||!nReal||(autoRunning&&st.spinMode==='auto');
+  $('#go').textContent=st.spinMode==='auto'&&!autoRunning?'🤖 Запустити авто':'🎯 Крутити';
+  $('#pause').textContent=paused?'▶ Далі':'⏸ Пауза';
+  $('#pause').disabled=!sp&&!autoRunning&&!autoTimer;
+  $('#undo').disabled=!!sp||!undoS[st.m].length;
+  $('#stopAuto').hidden=!autoRunning;$('#stopAuto').disabled=!autoRunning;
+  $('#clearWinners').disabled=!!sp;
+}
+function refresh(){const p=pool();sp?dirty=1:build(p);list(p);counts();ctl();save()}
+function apply(){document.body.dataset.m=st.m;document.documentElement.dataset.theme=st.theme;
+  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.m===st.m));
+  $('#speed').value=st.speed;$('#theme').value=st.theme;$('#snd').textContent=st.snd?'🔊':'🔇';$('#rm').checked=!!st.rm;$('#wsec').value=st.reply;
+  document.querySelectorAll('#spinModes button').forEach(b=>{const active=b.dataset.spin===st.spinMode;b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active))});
+  $('#mxa').checked=!!st.mxAll;$('#mxg').value=st.mxG;document.querySelectorAll('.mx').forEach(x=>x.disabled=!!st.mxAll);
+  $('#out').textContent=st.m==='wheel'?'Додайте учасників і крутіть':'Підключіться до каналу й відкрийте набір';refresh();histUI();chatUI()}
+function addText(t){const m=new Map(db.wheel.map(x=>[x.n.toLowerCase(),x]));
+  for(const ln of t.split(/\r?\n/)){const[n0,q]=ln.split(/[;,\t]/),n=(n0||'').trim().slice(0,40);if(!n)continue;const w=Math.min(100,Math.max(1,parseInt(q)||1)),o=m.get(n.toLowerCase());
+    if(o)o.t+=w;else{const x={n,t:w};m.set(n.toLowerCase(),x);db.wheel.push(x)}}refresh()}
+
+$('#roles').append(...ROLES.map(([k,t,i])=>{const l=el('label'),c=el('input'),s=el('small'),x=el('input','mx');
+  c.type='checkbox';c.checked=!!st.roles[k];c.onchange=()=>{st.roles[k]=+c.checked;refresh()};
+  x.type='number';x.min=1;x.max=50;x.value=st.mx[k]||1;x.title='Множник квитків';x.onchange=()=>{st.mx[k]=x.value=Math.max(1,Math.min(50,Math.floor(+x.value||1)));refresh()};
+  s.id='c_'+k;l.append(c,BD[i]?bimg(i):el('span','',i),t,s,x);return l}));
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{if(sp||b.dataset.m===st.m)return;if(st.m==='tape'){disc();collecting=0;sync()}st.m=b.dataset.m;pos=0;paused=0;apply()});
+$('#speed').onchange=e=>{st.speed=+e.target.value;save()};
+$('#theme').onchange=e=>{st.theme=e.target.value;apply()};
+$('#snd').onclick=()=>{st.snd^=1;apply()};
+$('#go').onclick=()=>spin();
+$('#stopAuto').onclick=()=>stopAuto(true);
+document.querySelectorAll('#spinModes button').forEach(b=>b.onclick=()=>{
+  if(st.spinMode===b.dataset.spin)return;
+  st.spinMode=b.dataset.spin;
+  if(st.spinMode==='manual')stopAuto();
+  document.querySelectorAll('#spinModes button').forEach(button=>{
+    const active=button.dataset.spin===st.spinMode;
+    button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
+  });
+  ctl();save();
+});
+$('#pause').onclick=()=>{
+  paused^=1;ctl();
+  if(!paused&&autoRunning){if(autoQueued)continueAutoIfQueued();else if(!sp&&!autoTimer)scheduleAutoSpin(150)}
+};
+$('#undo').onclick=undo;
+$('#rm').onchange=e=>{st.rm=+e.target.checked;refresh()};
+$('#mxa').onchange=e=>{st.mxAll=+e.target.checked;apply()};
+$('#mxg').onchange=e=>{st.mxG=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.mxG;refresh()};
+$('#add').onclick=()=>{addText($('#ta').value);$('#ta').value=''};
+$('#fbtn').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{const f=e.target.files[0];if(f)addText(await f.text());e.target.value=''};
+$('#clr').onclick=()=>{stopAuto();db.wheel=[];undoS.wheel.length=0;refresh()};
+$('#clr2').onclick=()=>{stopAuto();db.tape=[];users.clear();ban.clear();undoS.tape.length=0;refresh()};
+$('#clearWinners').onclick=()=>{
+  if(sp)return;
+  if(!hist.wheel.length&&!hist.tape.length){$('#out').textContent='Список переможців уже порожній.';return}
+  if(!confirm('Очистити всі записи переможців для колеса та Twitch-стрічки? Учасники не будуть видалені.'))return;
+  stopAuto();hist.wheel.length=0;hist.tape.length=0;undoS.wheel.length=0;undoS.tape.length=0;cur=null;
+  if($('#win').open)$('#win').close();histUI();save();$('#out').textContent='🧹 Усі записи переможців очищено.';ctl();
+};
+$('#conn').onclick=()=>ws||want?(disc(),collecting=0,$('#tst').textContent='відключено',sync()):connect();
+$('#open').onclick=()=>{collecting=!collecting;sync()};
+$('#wx').onclick=()=>{$('#win').close();continueAutoIfQueued()};
+$('#wsec').onchange=e=>{st.reply=Math.max(0,Math.min(3600,Math.floor(+e.target.value||0)));e.target.value=st.reply;save()};
+$('#wrs').onclick=()=>{if(!cur)return;cur.sec=st.reply;cur.dl=st.reply?Date.now()+st.reply*1e3:0;cur.state='wait';renderWin();histUI();save()};
+$('#rr').onclick=()=>{$('#win').close();autoQueued=false;if(cur){if(cur.state==='wait')cur.state='late';ban.add(cur.n.toLowerCase());dirty=1}save();histUI();spin();continueAutoIfQueued()};
+window.addEventListener('resize',()=>{if(!sp&&st.m==='tape')build(pool())});
+setInterval((n=>()=>{const now=Date.now();for(const h of hist.tape)if(h.state==='wait'&&h.dl&&now>h.dl){h.state='late';save();histUI();if(h===cur)renderWin()}renderWin(1);if(++n%20===0)histUI()})(0),1000);
+apply();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
