@@ -73,6 +73,8 @@ dialog::backdrop{background:#0009}
 @media(prefers-contrast:more){:root{--bd:currentColor}}
 @media print{header,.stage,.col,#list,button{display:none!important}main{display:block}}
 input[type=range]{width:150px;min-height:0;padding:0;accent-color:var(--ac)}#spd{min-width:3.4em}
+.el-warn{background:color-mix(in srgb,#facc15 30%,var(--s2));border-left:4px solid #facc15}
+.el-out{background:color-mix(in srgb,#ef4444 26%,var(--s2));border-left:4px solid #ef4444}.el-out .nm{text-decoration:line-through;opacity:.8}
 </style>
 </head>
 <body>
@@ -99,8 +101,8 @@ input[type=range]{width:150px;min-height:0;padding:0;accent-color:var(--ac)}#spd
       </div>
     </div>
     <div class="row"><button class="p" id="go">🎯 Крутити</button><button id="stopAuto" hidden>⏹ Зупинити авто</button><button id="pause" disabled>⏸ Пауза</button><button id="undo" disabled>↩ Скасувати</button></div>
-    <div class="row"><label class="row"><input type="checkbox" id="shuf"> Перемішувати порядок</label><button id="shufNow" title="Перемішати зараз">🔀</button><button id="rt" title="Статистичний тест генератора випадкових чисел">🎲 Тест рандому</button></div>
-    <div class="col" style="width:100%;max-width:44rem;gap:4px;text-align:left">
+    <div class="row"><label class="row"><input type="checkbox" id="shuf"> Перемішувати перед кожним прокрутом</label><button id="shufNow" title="Перемішати зараз">🔀</button><button id="rt" title="Статистичний тест генератора випадкових чисел">🎲 Тест рандому</button></div>
+    <div class="col" data-for="wheel" style="width:100%;max-width:44rem;gap:4px;text-align:left">
       <label class="row" for="rm"><input type="checkbox" id="rm" checked> <strong>Режим вибування</strong></label>
       <small class="mode-note">Увімкнено — після кожного результату вибуває лише один квиток. Учасник із кількома квитками залишається в пулі, доки не буде витягнуто останній квиток.</small>
     </div>
@@ -123,9 +125,10 @@ input[type=range]{width:150px;min-height:0;padding:0;accent-color:var(--ac)}#spd
       <button id="clr2">🗑 Очистити набір</button>
     </div>
     <h3>Учасники <small id="cnt">0</small></h3><ul id="list"></ul>
+    <div id="elimBox" hidden><h3>Вибування <small id="elimCnt"></small></h3><small>🟨 лишився 1 квиток · 🟥 вибув з розіграшу</small><ul id="elim"></ul></div>
     <div class="section-head"><h3>Переможці</h3><button id="clearWinners" type="button">🧹 Очистити всіх переможців</button></div>
     <ul id="hist"></ul>
-    <div class="row"><button id="exp">⬇ Експорт даних</button><button id="expw">📄 Переможці (CSV)</button><button id="imp">⬆ Імпорт</button><input type="file" id="impf" accept=".json" hidden aria-label="Імпорт даних"></div>
+    <div class="row"><button id="exp">⬇ Експорт даних</button><button id="expw">📄 Переможці (CSV)</button><button id="cpw">📋 Копіювати переможців</button><button id="imp">⬆ Імпорт</button><input type="file" id="impf" accept=".json" hidden aria-label="Імпорт даних"></div>
   </aside>
 </main>
 <div id="toast" role="alert"></div>
@@ -162,7 +165,7 @@ function fix(){st.speed=Math.min(8,Math.max(.25,+st.speed||1));if(!['dark','ligh
   for(const k of['roles','mx'])if(!st[k]||typeof st[k]!=='object')st[k]=k==='mx'?{}:{viewer:1,sub:1,vip:1,mod:1,artist:1,follow:1,nofollow:1};}
 fix();
 const db={wheel:ls('lt_wheel')||[],tape:ls('lt_tape')||[]},hist={wheel:ls('lt_wh')||[],tape:ls('lt_th')||[]};
-const ban=new Set(ls('lt_ban')||[]),users=new Map(db.tape.map(u=>[u.login,u]));
+const ban=new Set(ls('lt_ban')||[]),users=new Map(db.tape.map(u=>(delete u.leftT,[u.login,u])));
 let ring=[],nReal=0,pos=0,sp=null,paused=0,dirty=0,W=0,P=1,cards=[],hot=-1,cur=null,ws=null,chan='',want=0,collecting=0,retry=0,lastTick=0,fq=[],fbusy=0,ffail=0,ac,tm,ct,tPrev=performance.now();
 let autoRunning=false,autoTimer=0,autoQueued=false;
 const chat=[],undoS={wheel:[],tape:[]},seen=new Set();let bsig='',lastRx=Date.now();
@@ -172,19 +175,16 @@ const beep=(f,d,v=.06,dl=0)=>{if(!st.snd)return;try{ac??=new(window.AudioContext
 
 let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),3500)}
 const calm=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,xbtn=l=>{const b=el('button','','✖');b.setAttribute('aria-label',l);return b};
+const warnLeft=(n,left)=>{if(left===0)toast(`❌ ${n} вибув(ла) з розіграшу`);else if(left===1)toast(`⚠ У ${n} лишився 1 квиток`)};
 function confetti(){if(calm||!document.body.animate||document.querySelectorAll('.cf').length>80)return;for(let i=0;i<40;i++){const d=el('i','cf');d.style.cssText=`left:${rnd()*100}vw;background:${col(i)}`;document.body.append(d);
   d.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:`translateY(105vh) rotate(${rnd()*720}deg)`,opacity:.8}],{duration:1800+rnd()*1500,easing:'ease-in'}).onfinish=()=>d.remove()}}
 /* ---- pool & ring: 1 ticket = 1 slot of equal width ---- */
 const tix=u=>{if(st.mxAll)return st.mxG;const m=st.mx,r=['sub','vip','mod','artist'].filter(k=>u[k]);let v=Math.max(...(r.length?r:['viewer']).map(k=>m[k]||1));if(u.bot)v=Math.max(v,m.bot||1);if(u.owner)v=Math.max(v,m.owner||1);if(u.fol!=null)v=Math.max(v,m[u.fol?'follow':'nofollow']||1);return v};
 const can=(u,A)=>{if(u.bot&&!A.bot||u.owner&&!A.owner)return 0;const sp=['mod','vip','artist','sub'].filter(r=>u[r]);if(sp.length?!sp.some(r=>A[r]):!(A.viewer||u.bot||u.owner))return 0;return!(u.fol===true&&!A.follow||u.fol===false&&!A.nofollow)};
+const elim=()=>st.rm&&st.m==='wheel';
 const pool=()=>st.m==='wheel'
   ?db.wheel.filter(x=>x.t>0).map(x=>({n:x.n,t:x.t}))
-  :db.tape.filter(u=>!ban.has(u.n.toLowerCase())&&can(u,st.roles)).map(u=>{
-      const base=tix(u);
-      if(st.rm&&!Number.isFinite(u.leftT))u.leftT=base;
-      const remaining=st.rm&&Number.isFinite(u.leftT)?Math.max(0,Math.floor(u.leftT)):base;
-      return {n:u.n,t:remaining,u};
-    }).filter(x=>x.t>0);
+  :db.tape.filter(u=>!ban.has(u.n.toLowerCase())&&can(u,st.roles)).map(u=>({n:u.n,t:tix(u),u}));
 const slotsOf=p=>{const o=[];for(let r=0,m=1;m;r++){m=0;p.forEach((x,i)=>{if(x.t>r){o.push({n:x.n,u:x.u,c:i});m=1}})}return o.slice(0,400)};
 const pad=real=>{const T=real.length;if(!T)return Array.from({length:12},()=>({ph:1,n:'?'}));const k=Math.ceil(12/T);return Array.from({length:T*k},(_,i)=>real[i%T])};
 function build(p){const real=slotsOf(p),sg=st.m+$('#tp').clientWidth+real.map(x=>x.n+'|'+(x.u?.av||'')).join(';');if(sg===bsig){dirty=0;nReal=real.length;return}bsig=sg;nReal=real.length;const base=st.shuf?shuffle([...real]):real;ring=st.m==='wheel'?base:pad(base);dirty=0;st.m==='wheel'?drawWheel():drawTape()}
@@ -214,6 +214,7 @@ function spin(fromAuto=false){
   if(st.spinMode==='auto'&&!autoRunning&&!fromAuto)autoRunning=true;
   if(dirty)build(pool());if(!nReal){if(autoRunning)stopAuto();ctl();return}
   if(collecting){collecting=0;sync()}
+  if(st.shuf&&ring.length>1){bsig='';build(pool())}
   const S=ring.length,ids=ring.flatMap((x,i)=>x.ph?[]:[i]),i=ids[randInt(ids.length)],f=(i+.05+.9*rnd())/S,from=pos,turns=(st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W)))+randInt(3);
   sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:ring[i]};
   $('#out').textContent='???';ctl();
@@ -227,22 +228,18 @@ function done(x){
     if(st.rm){
       const index=db.wheel.findIndex(y=>y.n.toLocaleLowerCase()===x.n.toLocaleLowerCase());
       if(index>=0){const participant=db.wheel[index];u.p={n:participant.n,index};
-        if(participant.t>1)participant.t-=1;else db.wheel.splice(index,1);dirty=1}
+        participant.o??=participant.t;participant.t-=1;dirty=1;warnLeft(participant.n,participant.t)}
     }
     hist.wheel.unshift(h);
   }else{
     cards[hot]?.classList.add('win');setTimeout(()=>document.querySelectorAll('.cd.win').forEach(c=>c.classList.remove('win')),3e3);
-    if(st.rm&&x.u){
-      const hadLeft=Number.isFinite(x.u.leftT);
-      const left=hadLeft?x.u.leftT:tix(x.u);
-      u.tape={login:x.u.login,left,hadLeft};x.u.leftT=Math.max(0,left-1);dirty=1;
-    }
+    {const key=x.n.toLowerCase();ban.add(key);u.ban=key;dirty=1}
     Object.assign(h,{login:x.u.login,state:'wait',sec:st.reply,dl:st.reply?Date.now()+st.reply*1e3:0,msgs:(x.u.recent||[]).map(m=>({...m,pre:1}))});hist.tape.unshift(h);setTimeout(()=>showWin(h),700);
   }
   undoS[st.m].push(u);if(undoS[st.m].length>50)undoS[st.m].shift();
   if(st.m==='wheel'&&dirty)build(pool());
   setTimeout(()=>{if(!sp&&dirty){build(pool());list(pool());ctl()}},2500);
-  list(pool());histUI();ctl();save();
+  list(pool());elimUI();histUI();ctl();save();
   if(autoRunning&&st.spinMode==='auto')scheduleAutoSpin(850);
 }
 function scheduleAutoSpin(delay=650){
@@ -254,7 +251,7 @@ function scheduleAutoSpin(delay=650){
     if(paused){autoQueued=true;return}
     if(st.m==='tape'&&$('#win').open){autoQueued=true;return}
     const available=pool();
-    if(st.rm&&!available.some(p=>p.t>0)){stopAuto();$('#out').textContent='✅ Режим вибування завершено: квитки закінчилися.';ctl();return}
+    if(elim()&&!available.some(p=>p.t>0)){stopAuto();$('#out').textContent='✅ Режим вибування завершено: квитки закінчилися.';ctl();return}
     if(!available.some(p=>p.t>0)){stopAuto();ctl();return}
     spin(true);
   },delay);
@@ -271,7 +268,6 @@ function undo(){if(sp)return;const u=undoS[st.m].pop();if(!u)return;hist[st.m]=h
     if(existing)existing.t+=1;
     else db.wheel.splice(Math.max(0,Math.min(u.p.index??db.wheel.length,db.wheel.length)),0,{n:u.p.n,t:1});
   }
-  if(u.tape){const participant=db.tape.find(y=>y.login===u.tape.login);if(participant){if(u.tape.hadLeft)participant.leftT=u.tape.left;else delete participant.leftT}}
   if(u.ban)ban.delete(u.ban);if(cur===u.h)$('#win').close();$('#out').textContent='↩ Скасовано: '+u.h.n;refresh();histUI();continueAutoIfQueued()}
 
 /* ---- winner dialog (tape) ---- */
@@ -288,7 +284,7 @@ function renderWin(light){const h=cur;if(!h||!$('#win').open)return;const left=M
 /* ---- twitch chat ---- */
 function connect(){
   const c=$('#ch').value.trim().toLowerCase().replace(/^.*twitch\.tv\//,'').replace(/\W/g,'');
-  if(c.length<3){$('#out').textContent='Вкажіть коректну назву каналу';return}
+  if(c.length<3||c.length>25){$('#out').textContent='Вкажіть коректну назву каналу';return}
   disc();want=1;chan=c;ffail=0;$('#tst').textContent='підключення…';
   const w=ws=new WebSocket('wss://irc-ws.chat.twitch.tv:443');
   w.onopen=()=>['CAP REQ :twitch.tv/tags twitch.tv/commands','PASS SCHMOOPIIE','NICK justinfan'+(1e4+Math.floor(rnd()*8e4)),'JOIN #'+c].forEach(x=>w.send(x));
@@ -325,14 +321,21 @@ async function pump(){
 
 /* ---- UI ---- */
 function sync(){const on=!!ws||want;$('#conn').textContent=on?'Відключитися':'Підключитися';$('#open').disabled=!on;$('#open').textContent=collecting?'⏹ Закрити набір':'▶ Відкрити набір';$('#open').classList.toggle('p',!collecting)}
-function list(p){$('#cnt').textContent=p.length;
-  $('#list').replaceChildren(...p.slice(0,300).map(x=>{const li=el('li'),b=xbtn('Прибрати');li.append(el('span','nm',x.n));
-    if(x.u)x.u.badges.forEach(k=>li.append(bimg(k)));if(x.t>1)li.append(el('small','','🎟'+x.t));
-    b.onclick=()=>{if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()};li.append(b);return li}))}
-function histUI(){$('#hist').replaceChildren(...hist[st.m].slice(0,30).map(h=>{const li=el('li'),x=xbtn('Прибрати');
-  li.append(el('span','nm',h.n),el('small','',({ok:'✅ ',late:'⌛ ',wait:'⏳ '}[h.state]||'')+ago(h.t)));
-  if(h.login){li.style.cursor='pointer';li.onclick=()=>showWin(h)}
-  x.onclick=e=>{e.stopPropagation();hist[st.m]=hist[st.m].filter(y=>y!==h);histUI();save()};li.append(x);return li}))}
+let listSig='',listItems=[],histItems=[];
+function list(p){$('#cnt').textContent=p.length;const items=p.slice(0,300),sg=st.m+items.map(x=>x.n+'|'+x.t+'|'+(x.u?.badges||'')).join(';');
+  if(sg===listSig)return;listSig=sg;listItems=items;
+  $('#list').replaceChildren(...items.map((x,i)=>{const li=el('li');li.dataset.i=i;li.append(el('span','nm',x.n));
+    if(x.u)x.u.badges.forEach(k=>li.append(bimg(k)));if(x.t>1)li.append(el('small','','🎟'+x.t));li.append(xbtn('Прибрати'));return li}))}
+function histUI(){histItems=hist[st.m].slice(0,30);
+  $('#hist').replaceChildren(...histItems.map((h,i)=>{const li=el('li');li.dataset.i=i;
+    li.append(el('span','nm',h.n),el('small','',({ok:'✅ ',late:'⌛ ',wait:'⏳ '}[h.state]||'')+ago(h.t)),xbtn('Прибрати'));if(h.login)li.style.cursor='pointer';return li}))}
+function elimUI(){const box=$('#elimBox');box.hidden=!elim();if(!elim())return;
+  const rows=db.wheel.map(x=>({n:x.n,left:x.t,tot:Math.max(x.o??x.t,x.t)}));
+  rows.sort((a,b)=>(a.left||1e9)-(b.left||1e9)||a.n.localeCompare(b.n,'uk'));
+  const out=rows.filter(r=>!r.left).length,warn=rows.filter(r=>r.left===1).length;
+  $('#elimCnt').textContent=`у грі: ${rows.length-out} · 🟨 ${warn} · 🟥 ${out}`;
+  $('#elim').replaceChildren(...rows.slice(0,300).map(r=>{const li=el('li',r.left===0?'el-out':r.left===1?'el-warn':'');
+    li.append(el('span','nm',r.n),el('small','',r.left===0?'❌ вибув':r.left===1?'⚠ лишився 1 квиток':`🎟 ${r.left}/${r.tot}`));return li}))}
 function counts(){const c={};for(const u of db.tape){const k=['owner','mod','vip','artist','sub','bot'].filter(r=>u[r]);k.forEach(r=>c[r]=(c[r]||0)+1);
   if(!k.some(r=>r!=='owner'&&r!=='bot'))c.viewer=(c.viewer||0)+1;if(u.fol===true)c.follow=(c.follow||0)+1;if(u.fol===false)c.nofollow=(c.nofollow||0)+1}
   ROLES.forEach(([k])=>$('#c_'+k).textContent=c[k]||'')}
@@ -348,7 +351,7 @@ function ctl(){
   $('#stopAuto').hidden=!autoRunning;$('#stopAuto').disabled=!autoRunning;
   $('#clearWinners').disabled=!!sp;
 }
-function refresh(){const p=pool();sp?dirty=1:build(p);list(p);counts();ctl();save()}
+function refresh(){const p=pool();sp?dirty=1:build(p);list(p);elimUI();counts();ctl();save()}
 function apply(){document.body.dataset.m=st.m;document.documentElement.dataset.theme=st.theme;
   document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.m===st.m));
   $('#speed').value=Math.log2(st.speed);spdTxt();$('#theme').value=st.theme;$('#snd').textContent=st.snd?'🔊':'🔇';$('#rm').checked=!!st.rm;$('#shuf').checked=!!st.shuf;$('#wsec').value=st.reply;
@@ -358,12 +361,12 @@ function apply(){document.body.dataset.m=st.m;document.documentElement.dataset.t
 function addText(t){const m=new Map(db.wheel.map(x=>[x.n.toLowerCase(),x]));let add=0,dup=0,cutN=0;
   for(const ln of t.split(/\r?\n/).slice(0,5000)){const[n0,q]=ln.split(/[;,\t]/),r=(n0||'').trim();if(!r)continue;const n=r.slice(0,40);if(r.length>40)cutN++;
     const w=Math.min(100,Math.max(1,parseInt(q)||1)),o=m.get(n.toLowerCase());
-    if(o){o.t=Math.min(1e3,o.t+w);dup++}else{const x={n,t:w};m.set(n.toLowerCase(),x);db.wheel.push(x);add++}}
+    if(o){o.o=Math.min(1e3,(o.o??o.t)+w);o.t=Math.min(1e3,o.t+w);dup++}else{const x={n,t:w,o:w};m.set(n.toLowerCase(),x);db.wheel.push(x);add++}}
   refresh();toast(`Додано: ${add}${dup?`, об'єднано дублікатів: ${dup}`:''}${cutN?`, скорочено довгих імен: ${cutN}`:''}`)}
 
 $('#roles').append(...ROLES.map(([k,t,i])=>{const l=el('label'),c=el('input'),s=el('small'),x=el('input','mx');
   c.type='checkbox';c.checked=!!st.roles[k];c.onchange=()=>{st.roles[k]=+c.checked;refresh()};
-  x.type='number';x.min=1;x.max=50;x.value=st.mx[k]||1;x.title='Множник квитків';x.onchange=()=>{st.mx[k]=x.value=Math.max(1,Math.min(50,Math.floor(+x.value||1)));db.tape.forEach(u=>delete u.leftT);refresh()};
+  x.type='number';x.min=1;x.max=50;x.value=st.mx[k]||1;x.title='Множник квитків';x.onchange=()=>{st.mx[k]=x.value=Math.max(1,Math.min(50,Math.floor(+x.value||1)));refresh()};
   s.id='c_'+k;l.append(c,BD[i]?bimg(i):el('span','',i),t,s,x);return l}));
 document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{if(sp||b.dataset.m===st.m)return;if(st.m==='tape'){disc();collecting=0;sync()}stopAuto();st.m=b.dataset.m;pos=0;paused=0;apply()});
 const spdTxt=()=>{$('#spd').textContent=`${+st.speed.toFixed(2)}×`.replace('.',',')};
@@ -388,8 +391,8 @@ $('#pause').onclick=()=>{
 };
 $('#undo').onclick=undo;
 $('#rm').onchange=e=>{st.rm=+e.target.checked;refresh()};
-$('#mxa').onchange=e=>{st.mxAll=+e.target.checked;db.tape.forEach(u=>delete u.leftT);apply()};
-$('#mxg').onchange=e=>{st.mxG=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.mxG;db.tape.forEach(u=>delete u.leftT);refresh()};
+$('#mxa').onchange=e=>{st.mxAll=+e.target.checked;apply()};
+$('#mxg').onchange=e=>{st.mxG=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.mxG;refresh()};
 $('#add').onclick=()=>{addText($('#ta').value);$('#ta').value=''};
 $('#fbtn').onclick=()=>$('#file').click();
 $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>1e6||!/\.(txt|csv)$/i.test(f.name))return toast('Файл має бути .txt або .csv до 1 МБ');addText(await f.text())};
@@ -404,7 +407,12 @@ $('#clearWinners').onclick=()=>{
 };
 $('#conn').onclick=()=>ws||want?(disc(),collecting=0,$('#tst').textContent='відключено',sync()):connect();
 $('#open').onclick=()=>{collecting=!collecting;sync()};
-$('#wx').onclick=()=>{$('#win').close();continueAutoIfQueued()};
+$('#wx').onclick=()=>$('#win').close();
+$('#win').addEventListener('close',continueAutoIfQueued);
+$('#list').addEventListener('click',e=>{const li=e.target.closest('li'),x=e.target.closest('button')&&listItems[+li?.dataset.i];if(!x)return;
+  if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()});
+$('#hist').addEventListener('click',e=>{const li=e.target.closest('li'),h=li&&histItems[+li.dataset.i];if(!h)return;
+  if(e.target.closest('button')){hist[st.m]=hist[st.m].filter(y=>y!==h);histUI();save()}else if(h.login)showWin(h)});
 $('#wsec').onchange=e=>{st.reply=Math.max(0,Math.min(3600,Math.floor(+e.target.value||0)));e.target.value=st.reply;save()};
 $('#wrs').onclick=()=>{if(!cur)return;cur.sec=st.reply;cur.dl=st.reply?Date.now()+st.reply*1e3:0;cur.state='wait';renderWin();histUI();save()};
 $('#rr').onclick=()=>{$('#win').close();autoQueued=false;if(cur){if(cur.state==='wait')cur.state='late';ban.add(cur.n.toLowerCase());dirty=1}save();histUI();spin();continueAutoIfQueued()};
@@ -421,11 +429,15 @@ $('#shufNow').onclick=()=>{if(sp)return;bsig='';refresh();toast('Порядок 
 $('#rt').onclick=()=>{const S=Math.max(2,Math.min(ring.length||10,60)),N=S*2000,c=new Array(S).fill(0);for(let i=0;i<N;i++)c[randInt(S)]++;
   const e=N/S,x2=c.reduce((a,v)=>a+(v-e)**2/e,0),k=S-1,lim=k*(1-2/(9*k)+2.326*Math.sqrt(2/(9*k)))**3,dev=Math.max(...c.map(v=>Math.abs(v-e)/e))*100;
   toast(`🎲 ${N.toLocaleString('uk-UA')} випробувань, ${S} комірок: χ²=${x2.toFixed(1)} (межа 99%: ${lim.toFixed(1)}), макс. відхилення ${dev.toFixed(1)}% — ${x2<=lim?'рівномірно ✅':'підозріло ⚠ (повторіть тест)'}`)};
+$('#cpw').onclick=async()=>{const L=hist[st.m];if(!L.length)return toast('Немає переможців для копіювання');
+  const t=[...L].reverse().map((h,i)=>`${i+1}. ${h.n} — ${new Date(h.t).toLocaleString('uk-UA')}`).join('\n');
+  try{await navigator.clipboard.writeText(t)}catch{const a=el('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.append(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch{}a.remove();if(!ok)return toast('Не вдалося скопіювати: перевірте дозвіл на буфер обміну')}
+  toast(`Скопійовано переможців: ${L.length}`)};
 $('#imp').onclick=()=>$('#impf').click();
 $('#impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||f.size>5e6)return toast('Файл порожній або завеликий');
   try{const d=JSON.parse(await f.text());if(d.v!==1)throw 0;
     for(const k of['speed','theme','roles','reply','mx','mxAll','mxG','rm'])if(d.set?.[k]!==undefined)st[k]=d.set[k];fix();
-    db.wheel=(d.wheel||[]).filter(x=>typeof x?.n==='string').map(x=>({n:x.n.slice(0,40),t:Math.min(1e3,Math.max(1,+x.t||1))}));
+    db.wheel=(d.wheel||[]).filter(x=>typeof x?.n==='string').map(x=>{const t=Number.isFinite(+x.t)?Math.max(0,Math.min(1e3,+x.t)):1;return{n:x.n.slice(0,40),t,o:Math.max(t,Math.min(1e3,+x.o||t))}});
     db.tape=(d.tape||[]).filter(x=>typeof x?.login==='string'&&typeof x.n==='string').slice(-500).map(x=>({...x,badges:(x.badges||[]).filter(k=>BD[k]),recent:[]}));
     users.clear();db.tape.forEach(u=>users.set(u.login,u));
     for(const k of['wheel','tape'])hist[k]=(d.hist?.[k]||[]).filter(h=>typeof h?.n==='string').slice(0,100);
