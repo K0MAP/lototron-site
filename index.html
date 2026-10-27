@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline';style-src 'unsafe-inline' https://fonts.googleapis.com;font-src https://fonts.gstatic.com;img-src data: https:;connect-src wss://irc-ws.chat.twitch.tv https://decapi.me;object-src 'none';base-uri 'none';form-action 'none';upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline';style-src 'unsafe-inline' https://fonts.googleapis.com;font-src https://fonts.gstatic.com;img-src data: blob: https:;connect-src wss://irc-ws.chat.twitch.tv https://decapi.me;object-src 'none';base-uri 'none';form-action 'none';upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b1020">
 <meta name="description" content="Лототрон: колесо фортуни та рухома стрічка для розіграшів із чату Twitch">
@@ -83,12 +83,12 @@ body.arena .tape{height:clamp(160px,30vh,260px)}
 body.arena #out{font-size:clamp(2rem,6vw,5rem);text-shadow:0 0 24px var(--ac)}
 #arenaX{position:fixed;top:12px;right:12px;z-index:35;opacity:.35}#arenaX:hover,#arenaX:focus-visible{opacity:1}
 h1,#out{font-family:'Black Ops One',Impact,'Arial Black',system-ui,sans-serif}h1{letter-spacing:.02em;text-transform:uppercase}
-body{font-variant-numeric:tabular-nums}button:active{transform:translateY(2px)}
+body{font-variant-numeric:tabular-nums}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}button:active{transform:translateY(2px)}
 .hud{display:flex;align-items:center;gap:8px;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--mu)}.dot.on{background:var(--ac);box-shadow:0 0 8px var(--ac)}.dot.warn{background:var(--ac2)}
 #vol{width:90px}
 #go[aria-busy=true]{animation:pulseB 1s infinite}@keyframes pulseB{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 45%,transparent)}}
-@media(prefers-reduced-motion:reduce){#go,.center-gif{animation:none!important}}
+@media(prefers-reduced-motion:reduce){#go{animation:none!important}}
 .center-gif{position:absolute;left:50%;top:50%;z-index:1;width:18%;height:18%;border-radius:50%;object-fit:cover;pointer-events:none;border:3px solid var(--ac);box-shadow:0 0 20px color-mix(in srgb,var(--ac) 60%,transparent);transform:translate(-50%,-50%)}
 .center-gif.rot{animation:cgspin 8s linear infinite}@keyframes cgspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 /* dark = tactical HUD */
@@ -230,7 +230,7 @@ function drawWheel(){const c=$('#cv'),g=c.getContext('2d'),R=c.width/2,S=ring.le
   if(!S){g.fillStyle='#64748b55';g.beginPath();g.arc(R,R,R,0,7);g.fill();return}
   ring.forEach((x,i)=>{const a0=i*d-Math.PI/2;g.fillStyle=col(x.c);g.beginPath();g.moveTo(R,R);g.arc(R,R,R,a0,a0+d);g.fill();
     if(d>.07){g.save();g.translate(R,R);g.rotate(a0+d/2);g.fillStyle='#fff';g.font=`bold ${S>30?13:S>16?17:22}px system-ui`;g.textAlign='right';g.shadowColor='#000';g.shadowBlur=4;g.fillText(x.n.slice(0,18),R-24,6);g.restore()}})}
-function drawTape(){const trk=$('#trk'),vw=$('#tp').clientWidth||600,S=ring.length;trk.textContent='';hot=-1;W=150*S;P=Math.ceil(vw/2/W)+1;
+function drawTape(){const trk=$('#trk'),vw=$('#tp').clientWidth||600,S=ring.length;trk.textContent='';hot=-1;W=150*S;P=Math.max(1,Math.ceil(vw/2/W));
   const cp=el('div','cp');cp.style.width=W+'px';
   for(let i=S-1;i>=0;i--){const x=ring[i],c=el('div','cd');c.style.cssText=`width:150px;--c:${col(x.c||0)}`;c.append(av(x.u));if(!x.ph){c.title=x.n;c.append(el('b','',x.n))}cp.append(c)}
   for(let k=0;k<2*P+1;k++)trk.append(cp.cloneNode(true));trk.style.width=(2*P+1)*W+'px';cards=[...trk.children[P].children];place()}
@@ -368,7 +368,13 @@ async function pump(){
 /* ---- UI ---- */
 function sync(){const on=!!ws||want;$('#conn').textContent=on?'Відключитися':'Підключитися';$('#open').disabled=!on;$('#open').textContent=collecting?'⏹ Закрити набір':'▶ Відкрити набір';$('#open').classList.toggle('p',!collecting)}
 let listSig='',listItems=[],histItems=[],flashName='';
-const popOut=win=>{if(calm)return;$('#out').animate?.(win?[{transform:'scale(.6)',opacity:0},{transform:'scale(1.1)',opacity:1,offset:.6},{transform:'none'}]:[{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(-4px)'},{transform:'none'}],{duration:win?550:300,easing:'ease-out'})};
+const popOut=win=>{if(calm)return;const o=$('#out'),t=o.textContent;
+  if(!win)return o.animate?.([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(-4px)'},{transform:'none'}],{duration:300,easing:'ease-out'});
+  if(!t||t.length>60)return o.animate?.([{transform:'scale(.6)',opacity:0},{transform:'scale(1.1)',opacity:1,offset:.6},{transform:'none'}],{duration:550,easing:'ease-out'});
+  const vis=el('span');vis.setAttribute('aria-hidden','true');
+  [...t].forEach((c,i)=>{const x=el('span','',c===' '?'\u00A0':c);x.style.display='inline-block';vis.append(x);
+    x.animate?.([{transform:'translateY(24px) scale(.4)',opacity:0},{transform:'none',opacity:1}],{duration:520,delay:i*35,easing:'cubic-bezier(.34,1.56,.64,1)',fill:'backwards'})});
+  o.replaceChildren(el('span','sr',t),vis)};
 function list(p){hud(p);const q=$('#lq').value.trim().toLowerCase(),o=$('#lsort').value;
   let a=q?p.filter(x=>x.n.toLowerCase().includes(q)):p;
   if(o)a=[...a].sort(o==='td'?(x,y)=>y.t-x.t:o==='ta'?(x,y)=>x.t-y.t:(x,y)=>x.n.localeCompare(y.n,'uk'));
@@ -521,16 +527,29 @@ addEventListener('offline',()=>toast('Немає мережі: чат і ава�
 addEventListener('pagehide',()=>{want=0;ws?.close();save()});
 setInterval(()=>{if(ws&&Date.now()-lastRx>36e4)ws.close()},2e4);
 setInterval((n=>()=>{const now=Date.now();for(const h of hist.tape)if(h.state==='wait'&&h.dl&&now>h.dl){h.state='late';save();histUI();if(h===cur)renderWin()}renderWin(1);if(++n%20===0)histUI()})(0),1000);
-let cg=ls('lt_cg')||'',cgRot=!!ls('lt_cgr');
-const cgApply=()=>{const i=$('#cgif');i.hidden=!cg;if(cg)i.src=cg;i.classList.toggle('rot',cgRot&&!calm);$('#cgX').hidden=!cg;$('#cgRot').checked=cgRot};
+const idb=(mode,fn)=>new Promise((res,rej)=>{const r=indexedDB.open('lototron',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onerror=()=>rej(r.error);
+  r.onsuccess=()=>{const c=r.result,tx=c.transaction('kv',mode),q=fn(tx.objectStore('kv'));tx.oncomplete=()=>{c.close();res(q&&q.result)};tx.onerror=()=>{c.close();rej(tx.error)}}});
+const kvGet=k=>idb('readonly',x=>x.get(k)),kvSet=(k,v)=>idb('readwrite',x=>v==null?x.delete(k):x.put(v,k));
+{const wh=$('.wheel'),stg=$('.stage');
+  if(window.matchMedia?.('(pointer:fine)').matches&&!calm){stg.style.perspective='1200px';wh.style.transition='transform .15s ease-out';
+    stg.addEventListener('pointermove',e=>{if(st.m!=='wheel')return;const r=wh.getBoundingClientRect(),c=v=>Math.max(-.5,Math.min(.5,v));
+      wh.style.transform=`rotateX(${c(-(e.clientY-r.top-r.height/2)/r.height)*12}deg) rotateY(${c((e.clientX-r.left-r.width/2)/r.width)*12}deg)`});
+    stg.addEventListener('pointerleave',()=>{wh.style.transform=''})}}
+let cgUrl='',cgRot=!!ls('lt_cgr');
+const cgApply=()=>{const i=$('#cgif');i.hidden=!cgUrl;if(cgUrl)i.src=cgUrl;i.classList.toggle('rot',cgRot);$('#cgX').hidden=!cgUrl;$('#cgRot').checked=cgRot};
+const cgSet=b=>{if(cgUrl)URL.revokeObjectURL(cgUrl);cgUrl=b?URL.createObjectURL(b):'';cgApply()};
+async function cgInit(){cgApply();try{let b=await kvGet('cg');const old=ls('lt_cg');
+  if(!b&&old&&/^data:image\/[\w+.-]+;base64,/.test(old)){const[h,d]=old.split(',');b=new Blob([Uint8Array.from(atob(d),c=>c.charCodeAt(0))],{type:/:(.*?);/.exec(h)[1]});await kvSet('cg',b)}
+  if(b&&old)try{localStorage.removeItem('lt_cg')}catch{}
+  if(b)cgSet(b)}catch{}}
 $('#cgBtn').onclick=()=>$('#cgFile').click();
 $('#cgFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
-  if(!/^image\/(gif|png|webp|jpeg|svg\+xml)$/.test(f.type)||f.size>5e5)return toast('Потрібне зображення GIF/PNG/WebP/JPEG/SVG до 500 КБ');
-  const r=new FileReader();r.onload=()=>{cg=String(r.result);ls('lt_cg',cg);cgApply()};r.onerror=()=>toast('Не вдалося прочитати файл');r.readAsDataURL(f)};
-$('#cgX').onclick=()=>{cg='';ls('lt_cg','');cgApply()};
+  if(!/^image\/(gif|png|webp|jpeg|svg\+xml)$/.test(f.type)||f.size>5e6)return toast('Потрібне зображення GIF/PNG/WebP/JPEG/SVG до 5 МБ');
+  kvSet('cg',f).then(()=>cgSet(f)).catch(()=>{cgSet(f);toast('Сховище недоступне: зображення діє лише до закриття сторінки')})};
+$('#cgX').onclick=()=>{kvSet('cg',null).catch(()=>{});cgSet(null)};
 $('#cgRot').onchange=e=>{cgRot=e.target.checked;ls('lt_cgr',+cgRot);cgApply()};
 $('#vol').oninput=e=>{st.vol=e.target.value/100};$('#vol').onchange=()=>{save();beep(880,.12,.12)};
-cgApply();$('#vol').value=Math.round(st.vol*100);
+$('#vol').value=Math.round(st.vol*100);cgInit();
 apply();requestAnimationFrame(frame);
 </script>
 </body>
