@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline';style-src 'unsafe-inline';img-src data: https:;connect-src wss://irc-ws.chat.twitch.tv https://decapi.me;object-src 'none';base-uri 'none';form-action 'none';upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline';style-src 'unsafe-inline' https://fonts.googleapis.com;font-src https://fonts.gstatic.com;img-src data: https:;connect-src wss://irc-ws.chat.twitch.tv https://decapi.me;object-src 'none';base-uri 'none';form-action 'none';upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b1020">
 <meta name="description" content="Лототрон: колесо фортуни та рухома стрічка для розіграшів із чату Twitch">
-<link rel="preconnect" href="https://static-cdn.jtvnw.net"><link rel="preconnect" href="https://decapi.me">
+<link rel="preconnect" href="https://static-cdn.jtvnw.net"><link rel="preconnect" href="https://decapi.me"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap">
 <title>Лототрон</title>
 <style>
 :root{--bg:#0b1020;--s1:#121a30;--s2:#1b2542;--tx:#eef2ff;--mu:#94a3c4;--ac:#6366f1;--ac2:#22d3ee;--bd:#2a3558;color-scheme:dark}
@@ -75,22 +75,52 @@ dialog::backdrop{background:#0009}
 input[type=range]{width:150px;min-height:0;padding:0;accent-color:var(--ac)}#spd{min-width:3.4em}
 .el-warn{background:color-mix(in srgb,#facc15 30%,var(--s2));border-left:4px solid #facc15}
 .el-out{background:color-mix(in srgb,#ef4444 26%,var(--s2));border-left:4px solid #ef4444}.el-out .nm{text-decoration:line-through;opacity:.8}
+body.arena :is(header,aside,.spin-settings,.opt,.skip,.col[data-for=wheel]){display:none!important}
+body.arena main{grid-template-columns:1fr;max-width:none;min-height:100vh;align-content:center;padding:clamp(8px,2vw,24px)}
+body.arena .stage{background:transparent;border:0}
+body.arena .wheel{width:min(100%,80vh,900px)}
+body.arena .tape{height:clamp(160px,30vh,260px)}
+body.arena #out{font-size:clamp(2rem,6vw,5rem);text-shadow:0 0 24px var(--ac)}
+#arenaX{position:fixed;top:12px;right:12px;z-index:35;opacity:.35}#arenaX:hover,#arenaX:focus-visible{opacity:1}
+h1,#out{font-family:'Black Ops One',Impact,'Arial Black',system-ui,sans-serif}h1{letter-spacing:.02em;text-transform:uppercase}
+body{font-variant-numeric:tabular-nums}button:active{transform:translateY(2px)}
+.hud{display:flex;align-items:center;gap:8px;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--mu)}.dot.on{background:var(--ac);box-shadow:0 0 8px var(--ac)}.dot.warn{background:var(--ac2)}
+#vol{width:90px}
+#go[aria-busy=true]{animation:pulseB 1s infinite}@keyframes pulseB{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 45%,transparent)}}
+@media(prefers-reduced-motion:reduce){#go,.center-gif{animation:none!important}}
+.center-gif{position:absolute;left:50%;top:50%;z-index:1;width:18%;height:18%;border-radius:50%;object-fit:cover;pointer-events:none;border:3px solid var(--ac);box-shadow:0 0 20px color-mix(in srgb,var(--ac) 60%,transparent);transform:translate(-50%,-50%)}
+.center-gif.rot{animation:cgspin 8s linear infinite}@keyframes cgspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+/* dark = tactical HUD */
+[data-theme=dark]{--bg:#070b09;--s1:#0d1512;--s2:#14201a;--tx:#dffbe8;--mu:#7fa48d;--ac:#3ee37a;--ac2:#f5b73a;--bd:#1f3a2b}
+[data-theme=dark] body{font-family:ui-monospace,'Cascadia Code','Fira Code',Consolas,monospace}
+[data-theme=dark] :is(.card,button,select,input,textarea,li,fieldset,.seg,.seg button,.tape,dialog,.bar){border-radius:3px}
+[data-theme=dark] body::after{content:'';position:fixed;inset:0;z-index:50;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 2px,color-mix(in srgb,var(--ac) 7%,transparent) 2px 3px)}
+[data-theme=dark] .card{position:relative}
+[data-theme=dark] .card::before,[data-theme=dark] .card::after{content:'';position:absolute;width:14px;height:14px;pointer-events:none;border:2px solid var(--ac)}
+[data-theme=dark] .card::before{top:-2px;left:-2px;border-right:0;border-bottom:0}
+[data-theme=dark] .card::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+/* light = swiss industrial */
+[data-theme=light]{--bg:#efece4;--s1:#fffdf7;--s2:#f3efe4;--tx:#16130e;--mu:#5d564a;--ac:#d9301f;--ac2:#16130e;--bd:#16130e}
+[data-theme=light] :is(.card,button,select,input,textarea,li,fieldset,.seg,.seg button,.tape,dialog){border-radius:2px}
+[data-theme=light] .card{border-width:2px;box-shadow:5px 5px 0 var(--bd)}[data-theme=light] button{border-width:2px}
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Перейти до змісту</a>
 <header>
   <h1>🎰 Лототрон</h1>
+  <div class="hud" id="hud" role="status" aria-label="Стан розіграшу"><span class="dot" id="hDot"></span><span id="hTxt"></span></div>
   <div class="seg" id="modes" role="group" aria-label="Режим розіграшу"><button data-m="wheel">🎡 Колесо Фортуни</button><button data-m="tape">🎞 Рухома стрічка</button></div>
   <div class="row">
     <label class="row" title="Швидкість обертання"><span aria-hidden="true">⚡</span><input type="range" id="speed" min="-2" max="3" step="0.05" aria-label="Швидкість обертання"><output id="spd" for="speed">1×</output></label>
-    <select id="theme" aria-label="Тема" title="Тема"><option value="dark">Темна</option><option value="light">Світла</option><option value="neon">Неон</option></select>
-    <button id="snd" title="Звук" aria-label="Звук">🔊</button>
+    <select id="theme" aria-label="Тема" title="Тема"><option value="dark">Темна (HUD)</option><option value="light">Світла (індустріальна)</option><option value="neon">Неон</option></select>
+    <input type="range" id="vol" min="0" max="100" aria-label="Гучність" title="Гучність"><button id="snd" title="Звук" aria-label="Звук">🔊</button><button id="arena" title="Режим ефіру (F)" aria-label="Режим ефіру">🖥</button>
   </div>
 </header>
 <main id="main">
   <section class="card stage">
-    <div class="wheel"><i class="ptr"></i><canvas id="cv" width="640" height="640"></canvas></div>
+    <div class="wheel"><i class="ptr"></i><canvas id="cv" width="640" height="640"></canvas><img id="cgif" class="center-gif" alt="" hidden></div>
     <div class="tape" id="tp"><div class="trk" id="trk"></div><i class="mk"></i></div>
     <output id="out" role="status" aria-live="polite"></output>
     <div class="row spin-settings" aria-label="Керування обертанням">
@@ -100,8 +130,9 @@ input[type=range]{width:150px;min-height:0;padding:0;accent-color:var(--ac)}#spd
         <button type="button" data-spin="auto" aria-pressed="false">🤖 Авто</button>
       </div>
     </div>
-    <div class="row"><button class="p" id="go">🎯 Крутити</button><button id="stopAuto" hidden>⏹ Зупинити авто</button><button id="pause" disabled>⏸ Пауза</button><button id="undo" disabled>↩ Скасувати</button></div>
-    <div class="row"><label class="row"><input type="checkbox" id="shuf"> Перемішувати перед кожним прокрутом</label></div>
+    <div class="row ctl"><button class="p" id="go">🎯 Крутити</button><button id="stopAuto" hidden>⏹ Зупинити авто</button><button id="pause" disabled>⏸ Пауза</button><button id="undo" disabled>↩ Скасувати</button></div>
+    <div class="row opt"><label class="row"><input type="checkbox" id="shuf"> Перемішувати перед кожним прокрутом</label></div>
+    <div class="row opt" data-for="wheel"><button id="cgBtn">🖼 Центр колеса</button><button id="cgX" hidden aria-label="Прибрати зображення центру">✕</button><label class="row"><input type="checkbox" id="cgRot"> Обертати</label><input type="file" id="cgFile" accept="image/gif,image/png,image/webp,image/jpeg,image/svg+xml" hidden aria-label="Зображення для центру колеса"></div>
     <div class="col" data-for="wheel" style="width:100%;max-width:44rem;gap:4px;text-align:left">
       <label class="row" for="rm"><input type="checkbox" id="rm" checked> <strong>Режим вибування</strong></label>
       <small class="mode-note">Увімкнено — квиток, що випав, вибуває і записується у «Вибування». Розіграш триває, доки не залишиться вказана кількість останніх квитків — їхні власники стають переможцями. Режим «Авто» доступний лише тут.</small>
@@ -134,6 +165,7 @@ input[type=range]{width:150px;min-height:0;padding:0;accent-color:var(--ac)}#spd
   </aside>
 </main>
 <div id="toast" role="alert"></div>
+<button id="arenaX" hidden>✕ Вийти з режиму ефіру</button>
 <dialog id="win" aria-label="Переможець">
   <div class="col">
     <h3>🏆 Переможець</h3>
@@ -160,10 +192,10 @@ const av=u=>{const i=el('img','av');i.src=u?.av||STUB;i.alt='';i.referrerPolicy=
 const ROLES=[['viewer','Глядачі','👤'],['sub','Підписники','subscriber'],['vip','VIP','vip'],['mod','Модератори','moderator'],['artist','Артисти','artist-badge'],['follow','Фоловери','💙'],['nofollow','Не фоловери','💔'],['bot','Чатботи','🤖'],['owner','Стрімер','broadcaster']];
 const BOTS=/^(nightbot|streamelements|streamlabs\w*|moobot|fossabot|wizebot|soundalerts|commanderroot|supibot|sery_bot|botrixoficial|nightdev|restreambot)$|bot$/;
 
-const st={speed:1,theme:'dark',snd:1,roles:{viewer:1,sub:1,vip:1,mod:1,artist:1,follow:1,nofollow:1,bot:0,owner:0},reply:60,rm:1,spinMode:'manual',shuf:1,keepN:1,resetT:0,mx:{},mxAll:0,mxG:1,...ls('lt_set'),m:ls('lt_m')==='tape'?'tape':'wheel'};
+const st={speed:1,theme:'dark',snd:1,roles:{viewer:1,sub:1,vip:1,mod:1,artist:1,follow:1,nofollow:1,bot:0,owner:0},vol:.8,reply:60,rm:1,spinMode:'manual',shuf:1,keepN:1,resetT:0,mx:{},mxAll:0,mxG:1,...ls('lt_set'),m:ls('lt_m')==='tape'?'tape':'wheel'};
 if(!ls('lt_set')&&window.matchMedia?.('(prefers-color-scheme: light)').matches)st.theme='light';
 function fix(){st.speed=Math.min(8,Math.max(.25,+st.speed||1));if(!['dark','light','neon'].includes(st.theme))st.theme='dark';
-  if(!['manual','auto'].includes(st.spinMode))st.spinMode='manual';st.reply=Math.max(0,Math.min(3600,Math.floor(+st.reply||0)));st.mxG=Math.max(1,Math.min(50,Math.floor(+st.mxG||1)));st.keepN=Math.max(1,Math.min(50,Math.floor(+st.keepN||1)));st.resetT=+st.resetT||0;
+  if(!['manual','auto'].includes(st.spinMode))st.spinMode='manual';st.reply=Math.max(0,Math.min(3600,Math.floor(+st.reply||0)));st.mxG=Math.max(1,Math.min(50,Math.floor(+st.mxG||1)));st.keepN=Math.max(1,Math.min(50,Math.floor(+st.keepN||1)));st.vol=Number.isFinite(+st.vol)?Math.min(1,Math.max(0,+st.vol)):.8;st.resetT=+st.resetT||0;
   for(const k of['roles','mx'])if(!st[k]||typeof st[k]!=='object')st[k]=k==='mx'?{}:{viewer:1,sub:1,vip:1,mod:1,artist:1,follow:1,nofollow:1};}
 fix();
 const db={wheel:ls('lt_wheel')||[],tape:ls('lt_tape')||[]},hist={wheel:ls('lt_wh')||[],tape:ls('lt_th')||[]};
@@ -172,14 +204,18 @@ let ring=[],nReal=0,pos=0,sp=null,paused=0,dirty=0,W=0,P=1,cards=[],hot=-1,cur=n
 let autoRunning=false,autoTimer=0,autoQueued=false;
 const chat=[],undoS={wheel:[],tape:[]},seen=new Set();let bsig='',lastRx=Date.now();
 
-const save=()=>{ls('lt_set',{speed:st.speed,theme:st.theme,snd:st.snd,roles:st.roles,reply:st.reply,rm:st.rm,spinMode:st.spinMode,shuf:st.shuf,keepN:st.keepN,resetT:st.resetT,mx:st.mx,mxAll:st.mxAll,mxG:st.mxG});ls('lt_m',st.m);ls('lt_wheel',db.wheel);ls('lt_tape',db.tape.slice(-500));ls('lt_wh',hist.wheel.slice(0,100));ls('lt_th',hist.tape.slice(0,100));ls('lt_ban',[...ban])};
-const beep=(f,d,v=.06,dl=0)=>{if(!st.snd)return;try{ac??=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();const t=ac.currentTime+dl,o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(1e-4,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch{}};
+const save=()=>{ls('lt_set',{speed:st.speed,theme:st.theme,snd:st.snd,roles:st.roles,reply:st.reply,rm:st.rm,vol:st.vol,spinMode:st.spinMode,shuf:st.shuf,keepN:st.keepN,resetT:st.resetT,mx:st.mx,mxAll:st.mxAll,mxG:st.mxG});ls('lt_m',st.m);ls('lt_wheel',db.wheel);ls('lt_tape',db.tape.slice(-500));ls('lt_wh',hist.wheel.slice(0,100));ls('lt_th',hist.tape.slice(0,100));ls('lt_ban',[...ban])};
+const beep=(f,d,v=.06,dl=0)=>{if(!st.snd)return;try{ac??=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();const t=ac.currentTime+dl,o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(Math.max(v*st.vol,1e-4),t);g.gain.exponentialRampToValueAtTime(1e-4,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch{}};
 
 let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),3500)}
 const calm=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,xbtn=l=>{const b=el('button','','✖');b.setAttribute('aria-label',l);return b};
-const warnLeft=(n,left)=>{if(left===0)toast(`❌ ${n} вибув(ла) з розіграшу`);else if(left===1)toast(`⚠ У ${n} лишився 1 квиток`)};
+const warnLeft=(n,left)=>{if(autoRunning)return;if(left===0)toast(`❌ ${n} вибув(ла) з розіграшу`);else if(left===1)toast(`⚠ У ${n} лишився 1 квиток`)};
 function confetti(){if(calm||!document.body.animate||document.querySelectorAll('.cf').length>80)return;for(let i=0;i<40;i++){const d=el('i','cf');d.style.cssText=`left:${rnd()*100}vw;background:${col(i)}`;document.body.append(d);
   d.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:`translateY(105vh) rotate(${rnd()*720}deg)`,opacity:.8}],{duration:1800+rnd()*1500,easing:'ease-in'}).onfinish=()=>d.remove()}}
+const sweep=(f0,f1,d,v=.06,ty='sawtooth')=>{if(!st.snd)return;try{ac??=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
+  const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f1,t+d);
+  g.gain.setValueAtTime(Math.max(v*st.vol,1e-4),t);g.gain.exponentialRampToValueAtTime(1e-4,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch{}};
+let bipd=0;
 /* ---- pool & ring: 1 ticket = 1 slot of equal width ---- */
 const tix=u=>{if(st.mxAll)return st.mxG;const m=st.mx,r=['sub','vip','mod','artist'].filter(k=>u[k]);let v=Math.max(...(r.length?r:['viewer']).map(k=>m[k]||1));if(u.bot)v=Math.max(v,m.bot||1);if(u.owner)v=Math.max(v,m.owner||1);if(u.fol!=null)v=Math.max(v,m[u.fol?'follow':'nofollow']||1);return v};
 const can=(u,A)=>{if(u.bot&&!A.bot||u.owner&&!A.owner)return 0;const sp=['mod','vip','artist','sub'].filter(r=>u[r]);if(sp.length?!sp.some(r=>A[r]):!(A.viewer||u.bot||u.owner))return 0;return!(u.fol===true&&!A.follow||u.fol===false&&!A.nofollow)};
@@ -219,7 +255,7 @@ function spin(fromAuto=false){
   if(collecting){collecting=0;sync()}
   const S=ring.length,ids=ring.flatMap((x,i)=>x.ph?[]:[i]),i=ids[randInt(ids.length)],f=(i+.05+.9*rnd())/S,from=pos,turns=(st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W)))+randInt(3);
   sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:ring[i]};
-  $('#out').textContent='???';ctl();
+  $('#out').textContent='???';sweep(200,800,.15,.06);ctl();
 }
 function tick(now){const dt=now-lastTick;lastTick=now;if(dt<25)return;beep(500+1000/(1+dt/60),.04);
   if(!calm)(st.m==='wheel'?$('.ptr'):$('.mk')).animate?.(st.m==='wheel'?[{transform:'translateX(-50%) rotate(-14deg)'},{transform:'translateX(-50%)'}]:[{transform:'translateX(-50%) scaleX(3)'},{transform:'translateX(-50%)'}],{duration:110})}
@@ -236,7 +272,7 @@ function done(x){
     if(elim()){
       win=false;delete u.h;
       const p=db.wheel.find(y=>y.n.toLocaleLowerCase()===x.n.toLocaleLowerCase());
-      if(p){p.o??=p.t;u.p={n:p.n,lt:p.lt};p.t-=1;p.lt=Date.now();dirty=1;
+      if(p){p.o??=p.t;u.p={n:p.n,lt:p.lt};p.t-=1;p.lt=Date.now();dirty=1;flashName=p.n;
         $('#out').textContent=p.t?`❌ У ${p.n} вибуває квиток (лишилось ${p.t})`:`❌ ${p.n} вибув(ла) з розіграшу`;warnLeft(p.n,p.t)}
       if(tot()<=st.keepN){u.hs=finalize();win=true}
     }else{$('#out').textContent='🎉 '+x.n;hist.wheel.unshift(h)}
@@ -246,7 +282,7 @@ function done(x){
     {const key=x.n.toLowerCase();ban.add(key);u.ban=key;dirty=1}
     Object.assign(h,{login:x.u.login,state:'wait',sec:st.reply,dl:st.reply?Date.now()+st.reply*1e3:0,msgs:(x.u.recent||[]).map(m=>({...m,pre:1}))});hist.tape.unshift(h);setTimeout(()=>showWin(h),700);
   }
-  if(win){[523,659,784,1047].forEach((f,i)=>beep(f,.35,.12,i*.1));confetti();navigator.vibrate?.(80)}else{beep(330,.22,.1);beep(220,.32,.1,.14)}
+  if(win){[523,659,784,1047].forEach((f,i)=>beep(f,.35,.12,i*.1));confetti();navigator.vibrate?.(80)}else sweep(120,60,.22,.3,'sine');popOut(win);
   undoS[st.m].push(u);if(undoS[st.m].length>50)undoS[st.m].shift();
   if(st.m==='wheel'&&dirty)build(pool());
   setTimeout(()=>{if(!sp&&dirty){build(pool());list(pool());ctl()}},2500);
@@ -295,10 +331,10 @@ function renderWin(light){const h=cur;if(!h||!$('#win').open)return;const left=M
 function connect(){
   const c=$('#ch').value.trim().toLowerCase().replace(/^.*twitch\.tv\//,'').replace(/\W/g,'');
   if(c.length<3||c.length>25){$('#out').textContent='Вкажіть коректну назву каналу';return}
-  disc();want=1;chan=c;ffail=0;$('#tst').textContent='підключення…';
+  disc();want=1;chan=c;ffail=0;bipd=0;$('#tst').textContent='підключення…';
   const w=ws=new WebSocket('wss://irc-ws.chat.twitch.tv:443');
   w.onopen=()=>['CAP REQ :twitch.tv/tags twitch.tv/commands','PASS SCHMOOPIIE','NICK justinfan'+(1e4+Math.floor(rnd()*8e4)),'JOIN #'+c].forEach(x=>w.send(x));
-  w.onerror=()=>toast('Помилка підключення до чату');w.onmessage=e=>{lastRx=Date.now();String(e.data).split('\r\n').forEach(l=>l&&line(l))};
+  w.onerror=()=>{toast('Помилка підключення до чату');beep(220,.15,.1);beep(233,.15,.1)};w.onmessage=e=>{lastRx=Date.now();String(e.data).split('\r\n').forEach(l=>l&&line(l))};
   w.onclose=()=>{if(ws!==w)return;ws=null;if(want){$('#tst').textContent='перепідключення…';setTimeout(()=>want&&!ws&&connect(),Math.min(15e3,1e3*2**retry++)*(.7+.6*rnd()))}else $('#tst').textContent='відключено';sync()};
   sync();
 }
@@ -306,7 +342,7 @@ function disc(){want=0;const w=ws;ws=null;w?.close()}
 function line(l){
   if(l.startsWith('PING')){ws?.send('PONG :tmi.twitch.tv');return}
   const m=/^(?:@(\S+) )?:(\w+)!\S+ PRIVMSG #\S+ :(.*)$/.exec(l);
-  if(!m){if(/ (366|ROOMSTATE) /.test(l)){retry=0;$('#tst').textContent='#'+chan+' · у мережі';sync()}return}
+  if(!m){if(/ (366|ROOMSTATE) /.test(l)){retry=0;$('#tst').textContent='#'+chan+' · у мережі';sync();if(!bipd){bipd=1;beep(1000,.05,.08);beep(1000,.05,.08,.1)}}return}
   const t=Object.fromEntries((m[1]||'').split(';').map(x=>x.split(/=(.*)/s).slice(0,2))),b=(t.badges||'').split(',').filter(Boolean).map(x=>x.split('/')[0]),login=m[2],tx=m[3].replace(/^\x01ACTION |\x01$/g,'').trim(),n=t['display-name']||login;
   const roles={sub:+b.includes('subscriber'),vip:+b.includes('vip'),mod:+b.includes('moderator'),artist:+b.includes('artist-badge'),owner:+b.includes('broadcaster'),bot:+BOTS.test(login),badges:b.filter(k=>BD[k])};
   if(t.id){if(seen.has(t.id))return;seen.add(t.id);if(seen.size>300)seen.delete(seen.values().next().value)}
@@ -331,23 +367,32 @@ async function pump(){
 
 /* ---- UI ---- */
 function sync(){const on=!!ws||want;$('#conn').textContent=on?'Відключитися':'Підключитися';$('#open').disabled=!on;$('#open').textContent=collecting?'⏹ Закрити набір':'▶ Відкрити набір';$('#open').classList.toggle('p',!collecting)}
-let listSig='',listItems=[],histItems=[];
-function list(p){const q=$('#lq').value.trim().toLowerCase(),o=$('#lsort').value;
+let listSig='',listItems=[],histItems=[],flashName='';
+const popOut=win=>{if(calm)return;$('#out').animate?.(win?[{transform:'scale(.6)',opacity:0},{transform:'scale(1.1)',opacity:1,offset:.6},{transform:'none'}]:[{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(-4px)'},{transform:'none'}],{duration:win?550:300,easing:'ease-out'})};
+function list(p){hud(p);const q=$('#lq').value.trim().toLowerCase(),o=$('#lsort').value;
   let a=q?p.filter(x=>x.n.toLowerCase().includes(q)):p;
   if(o)a=[...a].sort(o==='td'?(x,y)=>y.t-x.t:o==='ta'?(x,y)=>x.t-y.t:(x,y)=>x.n.localeCompare(y.n,'uk'));
   $('#cnt').textContent=q?`${a.length}/${p.length}`:p.length;
   const items=a.slice(0,300),sg=st.m+q+o+items.map(x=>x.n+'|'+x.t+'|'+(x.u?.badges||'')).join(';');
   if(sg===listSig)return;listSig=sg;listItems=items;
-  $('#list').replaceChildren(...items.map((x,i)=>{const li=el('li');li.dataset.i=i;li.append(el('span','nm',x.n));
-    if(x.u)x.u.badges.forEach(k=>li.append(bimg(k)));if(x.t>1)li.append(el('small','','🎟'+x.t));li.append(xbtn('Прибрати'));return li}))}
+  const ul=$('#list'),prev=new Map(),flip=!calm&&ul.children.length<=150&&items.length<=150;
+  if(flip)for(const li of ul.children)prev.set(li.dataset.n,li.getBoundingClientRect());
+  ul.replaceChildren(...items.map((x,i)=>{const li=el('li');li.dataset.i=i;li.dataset.n=x.n;li.append(el('span','nm',x.n));
+    if(x.u)x.u.badges.forEach(k=>li.append(bimg(k)));if(x.t>1)li.append(el('small','','🎟'+x.t));li.append(xbtn('Прибрати'));return li}));
+  if(flip)for(const li of ul.children){const o=prev.get(li.dataset.n);
+    if(o){const n=li.getBoundingClientRect(),dx=o.left-n.left,dy=o.top-n.top;if(dx||dy)li.animate?.([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'})}
+    else if(prev.size)li.animate?.([{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'none'}],{duration:240})}}
 function histUI(){histItems=hist[st.m].slice(0,30);
   $('#hist').replaceChildren(...histItems.map((h,i)=>{const li=el('li');li.dataset.i=i;
     li.append(el('span','nm',h.n),el('small','',({ok:'✅ ',late:'⌛ ',wait:'⏳ '}[h.state]||'')+ago(h.t)),xbtn('Прибрати'));if(h.login)li.style.cursor='pointer';return li}))}
 function elimUI(){const box=$('#elimBox');box.hidden=!elim();if(!elim())return;
   const rows=db.wheel.filter(x=>x.t<(x.o??x.t)).sort((a,b)=>(b.lt||0)-(a.lt||0)),out=rows.filter(r=>!r.t).length,warn=rows.filter(r=>r.t===1).length;
   $('#elimCnt').textContent=`вибули: ${out} · 🟨 ${warn} · квитків: ${tot()} → переможцям ${st.keepN}`;
-  $('#elim').replaceChildren(...rows.slice(0,300).map(r=>{const li=el('li',r.t===0?'el-out':r.t===1?'el-warn':'');li.title=new Date(r.lt||0).toLocaleString('uk-UA');
-    li.append(el('span','nm',r.n),el('small','',r.t===0?'❌ вибув':r.t===1?'⚠ лишився 1 квиток':`🎟 ${r.t}/${r.o}`));return li}))}
+  $('#elim').replaceChildren(...rows.slice(0,300).map(r=>{const li=el('li',r.t===0?'el-out':r.t===1?'el-warn':'');li.title=new Date(r.lt||0).toLocaleString('uk-UA');li.dataset.n=r.n;
+    li.append(el('span','nm',r.n),el('small','',r.t===0?'❌ вибув':r.t===1?'⚠ лишився 1 квиток':`🎟 ${r.t}/${r.o}`));return li}));
+  if(flashName&&!calm){[...$('#elim').children].find(l=>l.dataset.n===flashName)?.animate?.([{boxShadow:'0 0 0 3px #ef4444,0 0 22px #ef4444'},{boxShadow:'0 0 0 0 transparent'}],{duration:1100});
+    $('#elimCnt').animate?.([{transform:'scale(1.25)'},{transform:'none'}],{duration:500})}
+  flashName=''}
 function counts(){const c={};for(const u of db.tape){const k=['owner','mod','vip','artist','sub','bot'].filter(r=>u[r]);k.forEach(r=>c[r]=(c[r]||0)+1);
   if(!k.some(r=>r!=='owner'&&r!=='bot'))c.viewer=(c.viewer||0)+1;if(u.fol===true)c.follow=(c.follow||0)+1;if(u.fol===false)c.nofollow=(c.nofollow||0)+1}
   ROLES.forEach(([k])=>$('#c_'+k).textContent=c[k]||'')}
@@ -356,7 +401,10 @@ function chatUI(){const C=$('#chat'),end=C.scrollTop+C.clientHeight>=C.scrollHei
 function syncSpinMode(){if(st.spinMode==='auto'&&!elim()){st.spinMode='manual';stopAuto()}
   const b=$('#spinModes [data-spin=auto]');b.disabled=!elim();b.title=elim()?'':'Авто доступний лише в режимі вибування («Колесо Фортуни»)';
   document.querySelectorAll('#spinModes button').forEach(x=>{const on=x.dataset.spin===st.spinMode;x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
+const hud=p=>{p??=pool();const z=n=>String(n).padStart(3,'0');$('#hTxt').textContent=`Учасників ${z(p.length)} · Квитків ${z(p.reduce((a,x)=>a+x.t,0))}`;
+  $('#hDot').className='dot '+(st.m==='tape'?(ws?(collecting?'on':'warn'):''):(sp||autoRunning?'on':''))};
 function ctl(){
+  hud();
   syncSpinMode();
   $('#go').setAttribute('aria-busy',String(!!sp));
   $('#go').disabled=!!sp||!!paused||!nReal||(autoRunning&&st.spinMode==='auto')||(elim()&&tot()<=st.keepN&&wonAll());
@@ -408,7 +456,7 @@ $('#pause').onclick=()=>{
 $('#undo').onclick=undo;
 $('#rm').onchange=e=>{st.rm=+e.target.checked;$('#keepN').disabled=!st.rm;refresh()};
 $('#keepN').onchange=e=>{st.keepN=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.keepN;refresh()};
-$('#elimReset').onclick=()=>{if(sp)return;if(!db.wheel.some(x=>x.t<(x.o??x.t)))return toast('Немає що скидати');stopAuto();
+$('#elimReset').onclick=()=>{if(sp)return;if(!db.wheel.some(x=>x.t<(x.o??x.t)))return toast('Немає що скидати');if(!confirm('Повернути всім початкові квитки? Скасувати це не вдасться.'))return;stopAuto();
   db.wheel.forEach(x=>{x.t=x.o??x.t;delete x.lt});st.resetT=Date.now();undoS.wheel.length=0;$('#out').textContent='↺ Вибування скинуто: усі квитки повернуто';refresh();save()};
 $('#mxa').onchange=e=>{st.mxAll=+e.target.checked;apply()};
 $('#mxg').onchange=e=>{st.mxG=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.mxG;refresh()};
@@ -428,6 +476,11 @@ $('#conn').onclick=()=>ws||want?(disc(),collecting=0,$('#tst').textContent='ві
 $('#open').onclick=()=>{collecting=!collecting;sync()};
 $('#wx').onclick=()=>$('#win').close();
 const rl=()=>list(pool());$('#lq').oninput=rl;$('#lsort').onchange=rl;
+const setArena=on=>{document.body.classList.toggle('arena',on);$('#arenaX').hidden=!on;
+  if(on)Promise.resolve(document.documentElement.requestFullscreen?.()).catch(()=>{});else if(document.fullscreenElement)document.exitFullscreen?.()};
+$('#arena').onclick=()=>setArena(!document.body.classList.contains('arena'));$('#arenaX').onclick=()=>setArena(false);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('arena')&&!$('#win').open)setArena(false)});
+if(location.hash==='#arena')setArena(true);
 $('#win').addEventListener('close',continueAutoIfQueued);
 $('#list').addEventListener('click',e=>{const li=e.target.closest('li'),x=e.target.closest('button')&&listItems[+li?.dataset.i];if(!x)return;
   if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()});
@@ -462,12 +515,22 @@ $('#impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f|
 {const t=ls('lt_tw')||{};if(t.ch)$('#ch').value=t.ch;if(t.kw)$('#kw').value=t.kw;if('any' in t)$('#any').checked=!!t.any;
   const sv=()=>ls('lt_tw',{ch:$('#ch').value,kw:$('#kw').value,any:$('#any').checked});['#ch','#kw','#any'].forEach(q=>$(q).addEventListener('change',sv))}
 addEventListener('keydown',e=>{if(e.target.closest?.('input,textarea,select,button,dialog')||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
-  if(e.code==='Space'||k==='enter'){e.preventDefault();spin()}else if(k==='p')$('#pause').click();else if(k==='u')$('#undo').click()});
+  if(e.code==='Space'||k==='enter'){e.preventDefault();spin()}else if(k==='p')$('#pause').click();else if(k==='u')$('#undo').click();else if(k==='f')$('#arena').click()});
 let errT=0;const onErr=e=>{console.error(e.error||e.reason||e);if(Date.now()-errT>1e4){errT=Date.now();toast('Сталася помилка. Якщо щось не працює — оновіть сторінку.')}};addEventListener('error',onErr);addEventListener('unhandledrejection',onErr);
 addEventListener('offline',()=>toast('Немає мережі: чат і аватарки недоступні'));addEventListener('online',()=>toast('Мережу відновлено'));
 addEventListener('pagehide',()=>{want=0;ws?.close();save()});
 setInterval(()=>{if(ws&&Date.now()-lastRx>36e4)ws.close()},2e4);
 setInterval((n=>()=>{const now=Date.now();for(const h of hist.tape)if(h.state==='wait'&&h.dl&&now>h.dl){h.state='late';save();histUI();if(h===cur)renderWin()}renderWin(1);if(++n%20===0)histUI()})(0),1000);
+let cg=ls('lt_cg')||'',cgRot=!!ls('lt_cgr');
+const cgApply=()=>{const i=$('#cgif');i.hidden=!cg;if(cg)i.src=cg;i.classList.toggle('rot',cgRot&&!calm);$('#cgX').hidden=!cg;$('#cgRot').checked=cgRot};
+$('#cgBtn').onclick=()=>$('#cgFile').click();
+$('#cgFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  if(!/^image\/(gif|png|webp|jpeg|svg\+xml)$/.test(f.type)||f.size>5e5)return toast('Потрібне зображення GIF/PNG/WebP/JPEG/SVG до 500 КБ');
+  const r=new FileReader();r.onload=()=>{cg=String(r.result);ls('lt_cg',cg);cgApply()};r.onerror=()=>toast('Не вдалося прочитати файл');r.readAsDataURL(f)};
+$('#cgX').onclick=()=>{cg='';ls('lt_cg','');cgApply()};
+$('#cgRot').onchange=e=>{cgRot=e.target.checked;ls('lt_cgr',+cgRot);cgApply()};
+$('#vol').oninput=e=>{st.vol=e.target.value/100};$('#vol').onchange=()=>{save();beep(880,.12,.12)};
+cgApply();$('#vol').value=Math.round(st.vol*100);
 apply();requestAnimationFrame(frame);
 </script>
 </body>
