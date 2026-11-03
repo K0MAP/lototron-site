@@ -131,7 +131,7 @@ h1:hover::before{opacity:1;color:var(--ac2);clip-path:inset(0 0 55% 0);animation
 </header>
 <main id="main">
   <section class="card stage">
-    <div class="wheel"><i class="ptr"></i><canvas id="cv" width="640" height="640"></canvas><img id="cgif" class="center-gif" alt="" hidden></div>
+    <div class="wheel"><i class="ptr"></i><canvas id="cv" width="640" height="640" role="img" aria-label="Колесо фортуни; список учасників наведено праворуч"></canvas><img id="cgif" class="center-gif" alt="" hidden></div>
     <div class="tape" id="tp"><div class="trk" id="trk"></div><i class="mk"></i></div>
     <output id="out"></output><div id="announce" class="sr" role="status" aria-live="polite"></div>
     <div class="row spin-settings" aria-label="Керування обертанням">
@@ -202,7 +202,7 @@ const ago=t=>{const s=(Date.now()-t)/1e3;if(s<10)return'щойно';const u=[[60
 const BD={broadcaster:'5527c58c-fb7d-422d-b71b-f309dcb85cc1',moderator:'3267646d-33f0-4b17-b3df-f923a41db1d0',vip:'b817aba4-fad8-49e2-b88a-7cc744dfa6ec','artist-badge':'4300a897-03dc-4e83-8c0e-c332fee7057f',subscriber:'5d9f2208-5dd8-11e7-8513-2ff4adfae661',staff:'d97c37bd-a6f5-4c38-8f57-4e4bef88af34',partner:'d12a2e27-16f6-41d0-ab77-b780518f00a3',premium:'bbbe0db0-a598-423e-86d0-f9fb98ca1933',founder:'511b78a9-ab37-472f-9569-457753bbe7d3',no_audio:'aef2cd08-f29b-45a1-8c12-d44d7fd5e6f0',no_video:'199a0dba-58f3-494e-a7fc-1fa0a1001fb8'};
 const bimg=k=>{const i=el('img','bi');i.src=`https://static-cdn.jtvnw.net/badges/v1/${BD[k]}/1`;i.alt=k;return i};
 const STUB='https://static-cdn.jtvnw.net/user-default-pictures-uv/de130ab0-def7-11e9-b668-784f43822e80-profile_image-300x300.png',FALL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%236b7280'/%3E%3Ccircle cx='4' cy='3' r='1.5' fill='%23d1d5db'/%3E%3Cpath d='M1 8a3 3 0 0 1 6 0z' fill='%23d1d5db'/%3E%3C/svg%3E";
-const av=u=>{const i=el('img','av');i.loading='lazy';i.decoding='async';i.src=typeof u?.av==='string'&&/^https:\/\/static-cdn\.jtvnw\.net\//.test(u.av)?u.av:STUB;i.alt='';i.referrerPolicy='no-referrer';i.onerror=()=>{i.onerror=null;i.src=FALL};return i};
+const av=u=>{const i=el('img','av');i.loading='lazy';i.decoding='async';i.src=typeof u?.av==='string'&&/^https:\/\/static-cdn\.jtvnw\.net\//.test(u.av)?u.av:STUB;i.alt='';i.referrerPolicy='no-referrer';return i};
 const ROLES=[['viewer','Глядачі',''],['sub','Підписники','subscriber'],['vip','VIP','vip'],['mod','Модератори','moderator'],['artist','Артисти','artist-badge'],['follow','Фоловери',''],['nofollow','Не фоловери',''],['bot','Чатботи',''],['owner','Стрімер','broadcaster']];
 const BOTS=/^(nightbot|streamelements|streamlabs\w*|moobot|fossabot|wizebot|soundalerts|commanderroot|supibot|sery_bot|botrixoficial|nightdev|restreambot)$|bot$/;
 
@@ -235,7 +235,7 @@ const flushSave=()=>{if(saveTimer){clearTimeout(saveTimer);saveTimer=0}saveNow()
 
 document.getElementById('storageRetry').onclick=()=>{qw=0;flushSave();if(!qw)document.getElementById('storageWarning').hidden=true};
 let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),3500)}
-let calm=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;const xbtn=l=>{const b=el('button','','×');b.setAttribute('aria-label',l);return b};
+let calm=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;const xbtn=l=>{const b=el('button','','×');b.type='button';b.setAttribute('aria-label',l);return b};
 const warnLeft=(n,left)=>{if(autoRunning)return;if(left===0)toast(`${n} вибув(ла) з розіграшу`);else if(left===1)toast(`У ${n} лишився 1 квиток`)};
 function confetti(){if(calm||!document.body.animate||document.querySelectorAll('.cf').length>80)return;for(let i=0;i<40;i++){const d=el('i','cf');d.style.cssText=`left:${Math.round(rnd()*50)*2}vw;background:${col(i)}`;document.body.append(d);
   d.animate([{transform:'translateY(0)'},{transform:'translateY(105vh)'}],{duration:1800+rnd()*1500,easing:'steps(16)'}).onfinish=()=>d.remove()}}
@@ -252,7 +252,7 @@ const needle=new Spring(320,8,.6);
 const impact=()=>{if(calm)return;$('.stage').animate?.([{transform:'translate(0,0)'},{transform:'translate(-7px,3px)'},{transform:'translate(6px,-4px)'},{transform:'translate(-4px,2px)'},{transform:'translate(2px,-1px)'},{transform:'none'}],{duration:380,easing:'steps(6)'})};
 /* ---- pool & ring: 1 ticket = 1 slot of equal width ---- */
 const tix=u=>{if(st.mxAll)return st.mxG;const m=st.mx,r=['sub','vip','mod','artist'].filter(k=>u[k]);let v=Math.max(...(r.length?r:['viewer']).map(k=>m[k]||1));if(u.bot)v=Math.max(v,m.bot||1);if(u.owner)v=Math.max(v,m.owner||1);if(u.fol!=null)v=Math.max(v,m[u.fol?'follow':'nofollow']||1);return v};
-const can=(u,A)=>{if(u.bot&&!A.bot||u.owner&&!A.owner)return 0;const sp=['mod','vip','artist','sub'].filter(r=>u[r]);if(sp.length?!sp.some(r=>A[r]):!(A.viewer||u.bot||u.owner))return 0;return!(u.fol===true&&!A.follow||u.fol===false&&!A.nofollow)};
+const can=(u,A)=>{if(u.fol==null&&(!A.follow||!A.nofollow))return 0;if(u.bot&&!A.bot||u.owner&&!A.owner)return 0;const sp=['mod','vip','artist','sub'].filter(r=>u[r]);if(sp.length?!sp.some(r=>A[r]):!(A.viewer||u.bot||u.owner))return 0;return!(u.fol===true&&!A.follow||u.fol===false&&!A.nofollow)};
 const elim=()=>st.rm&&st.m==='wheel';
 const pool=()=>st.m==='wheel'
   ?db.wheel.filter(x=>x.t>0).map(x=>({n:x.n,t:x.t}))
@@ -271,6 +271,8 @@ function drawWheel(){const c=$('#cv'),g=c.getContext('2d'),R=c.width/2,S=ring.le
   g.strokeStyle='rgba(0,0,0,.3)';g.lineWidth=1.5;
   ring.forEach((x,i)=>{const a0=i*d-Math.PI/2;g.fillStyle=col(x.c);g.beginPath();g.moveTo(R,R);g.arc(R,R,R,a0,a0+d);g.closePath();g.fill();g.stroke();
     if(d>.07){g.save();g.translate(R,R);g.rotate(a0+d/2);g.fillStyle='#fff';g.font=`bold ${S>30?13:S>16?17:22}px system-ui`;g.textAlign='right';g.shadowColor='#000';g.shadowBlur=4;g.fillText(x.n.slice(0,18),R-24,6);g.restore()}})}
+// Error events do not retain property handlers across cloneNode(true).
+$('#trk').addEventListener('error',e=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src!==FALL)i.src=FALL},true);
 function drawTape(){const trk=$('#trk'),vw=$('#tp').clientWidth||600,S=ring.length;trk.textContent='';hot=-1;W=150*S;P=Math.max(1,Math.ceil(vw/2/W));
   const cp=el('div','cp');cp.style.width=W+'px';
   for(let i=S-1;i>=0;i--){const x=ring[i],c=el('div','cd');c.style.cssText=`width:150px;--c:${col(x.c||0)}`;c.append(av(x.u));if(!x.ph){c.title=x.n;c.append(el('b','',x.n))}cp.append(c)}
@@ -285,7 +287,7 @@ function frame(now){try{if(!document.hidden)frame0(now);else tPrev=now}catch(e){
 function frame0(now){const dt=Math.min(100,now-tPrev);tPrev=now;
   if(!paused){
     if(sp){sp.el+=dt;const k=Math.min(1,sp.el/sp.ms);pos=sp.from+(sp.to-sp.from)*(1-(1-k)**4);const q=seg(pos);if(q!==sp.last){sp.last=q;tick(now)}if(k>=1){const x=sp.s;sp=null;done(x)}}
-    else if(ring.length)pos=frac(pos+(st.m==='wheel'?dt/4e4:dt*.07/Math.max(1,W))*(calm?.3:1));
+    else if(ring.length&&!calm)pos=frac(pos+(st.m==='wheel'?dt/4e4:dt*.07/Math.max(1,W)));
     place();
     if(!needle.still){needle.step(Math.min(dt,50)/1000);const e=st.m==='wheel'?$('.ptr'):$('.mk');
       if(needle.still){needle.x=needle.v=0;e.style.transform=''}
@@ -297,8 +299,18 @@ function spin(fromAuto=false){
   if(st.spinMode==='auto'&&!autoRunning&&!fromAuto)autoRunning=true;
   if(dirty||st.shuf){if(st.shuf)bsig='';build(pool())}if(!nReal){if(autoRunning)stopAuto();ctl();return}
   if(collecting){collecting=0;sync()}
-  const S=ring.length,ids=ring.flatMap((x,i)=>x.ph?[]:[i]),i=ids[randInt(ids.length)],f=(i+.05+.9*rnd())/S,from=pos,turns=(st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W)))+randInt(3);
-  sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:ring[i]};
+  // Select fairly from the FULL ticket pool; 400 visual slots are not the draw space.
+  const eligible=pool(),total=eligible.reduce((a,x)=>a+Math.max(0,Math.floor(x.t)),0);
+  if(!total){if(autoRunning)stopAuto();ctl();return}
+  let ticketIndex=randInt(total),winner=eligible[eligible.length-1];
+  for(const item of eligible){ticketIndex-=Math.max(0,Math.floor(item.t));if(ticketIndex<0){winner=item;break}}
+  const S=ring.length;
+  // Ensure the sampled winner appears at the visual landing point.
+  let ids=[];for(let k=0;k<S;k++)if(!ring[k].ph&&ring[k].n===winner.n)ids.push(k);
+  if(!ids.length){const k=randInt(S);ring[k]={n:winner.n,u:winner.u,c:eligible.indexOf(winner)};
+    if(st.m==='wheel')drawWheel();else drawTape();ids=[k]}
+  const i=ids[randInt(ids.length)],f=(i+.05+.9*rnd())/S,from=pos,turns=(st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W)))+randInt(3);
+  sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:{n:winner.n,u:winner.u,c:eligible.indexOf(winner)}};
   $('#out').textContent='???';$('#announce').textContent='';SFX.start();ctl();
 }
 function tick(now){const dt=now-lastTick;lastTick=now;if(dt<25)return;const vel=Math.min(1,50/Math.max(dt,12));SFX.tick(vel);if(!calm)needle.v-=vel*11}
@@ -350,6 +362,7 @@ function scheduleAutoSpin(delay=650){
 }
 function stopAuto(showMessage=false){
   autoRunning=false;autoQueued=false;if(autoTimer){clearTimeout(autoTimer);autoTimer=0}
+  if(paused&&!sp)paused=0;
   if(showMessage)$('#out').textContent='Автоматичні спіни зупинено.';
   ctl();
 }
@@ -374,9 +387,14 @@ function renderWin(light){const h=cur;if(!h||!$('#win').open)return;const left=M
 
 /* ---- twitch chat ---- */
 function connect(){
-  const c=$('#ch').value.trim().toLowerCase().replace(/^.*twitch\.tv\//,'').replace(/\W/g,'');
-  if(c.length<3||c.length>25){$('#out').textContent='Вкажіть коректну назву каналу';return}
-  disc();want=1;chan=c;ffail=0;bipd=0;$('#tst').textContent='підключення…';
+  const raw=$('#ch').value.trim().toLowerCase();const c=raw.replace(/^.*twitch\.tv\//,'').split(/[/?#]/)[0];
+  if(!/^[a-z0-9_]{3,25}$/.test(c)){$('#out').textContent='Вкажіть коректну назву каналу';return}
+  // Reconnect must not reset pending profile requests.
+  const switching=chan&&chan!==c;
+  if(switching){fq.length=0;pumpEpoch++;}
+  const old=ws;ws=null;old?.close();want=1;chan=c;ffail=0;bipd=0;$('#tst').textContent='підключення…';
+  const queued=new Set(fq.map(u=>u.login));for(const u of db.tape)if(u.fol==null&&!queued.has(u.login)){fq.push(u);queued.add(u.login)}
+  pump();
   const w=ws=new WebSocket('wss://irc-ws.chat.twitch.tv:443');
   w.onopen=()=>['CAP REQ :twitch.tv/tags twitch.tv/commands','PASS SCHMOOPIIE','NICK justinfan'+(1e4+Math.floor(rnd()*8e4)),'JOIN #'+c].forEach(x=>w.send(x));
   w.onerror=()=>{toast('Помилка підключення до чату');SFX.err()};w.onmessage=e=>{lastRx=Date.now();String(e.data).split('\r\n').forEach(l=>l&&line(l))};
@@ -389,14 +407,14 @@ function line(l){
   const m=/^(?:@(\S+) )?:(\w+)!\S+ PRIVMSG #\S+ :(.*)$/.exec(l);
   if(!m){if(/ (366|ROOMSTATE) /.test(l)){retry=0;$('#tst').textContent='у мережі: #'+chan;sync();if(!bipd){bipd=1;SFX.on()}}return}
   const t=Object.fromEntries((m[1]||'').split(';').map(x=>x.split(/=(.*)/s).slice(0,2))),b=(t.badges||'').split(',').filter(Boolean).map(x=>x.split('/')[0]),login=m[2],tx=m[3].replace(/^\x01ACTION |\x01$/g,'').trim(),n=t['display-name']||login;
-  const roles={sub:+b.includes('subscriber'),vip:+b.includes('vip'),mod:+b.includes('moderator'),artist:+b.includes('artist-badge'),owner:+b.includes('broadcaster'),bot:+BOTS.test(login),badges:b.filter(k=>BD[k])};
+  const roles={sub:+b.includes('subscriber'),vip:+b.includes('vip'),mod:+b.includes('moderator'),artist:+b.includes('artist-badge'),owner:+b.includes('broadcaster'),bot:+BOTS.test(login),badges:b.filter(k=>Object.hasOwn(BD,k))};
   if(t.id){if(seen.has(t.id))return;seen.add(t.id);if(seen.size>300)seen.delete(seen.values().next().value)}
   let u=users.get(login),changed=0;const kw=$('#kw').value.trim().toLowerCase();
   if(!u&&collecting&&!ban.has(n.toLowerCase())&&($('#any').checked||kw&&tx.toLowerCase().split(/\s+/)[0]===kw)){u={n,login,id:t['user-id'],recent:[]};users.set(login,u);db.tape.push(u);fq.push(u);pump();changed=1}
   if(u){const sg=JSON.stringify(roles);if(u.sg!==sg){u.sg=sg;changed=1}Object.assign(u,roles);u.recent=[...u.recent.slice(-4),{t:Date.now(),x:tx.slice(0,300)}]}
   chat.push({n,c:t.color,b:roles.badges,x:tx,in:!!u});if(chat.length>40)chat.shift();
   const h=winnerByLogin.get(login);
-  if(h){h.msgs.push({t:Date.now(),x:tx.slice(0,300)});if(h.state==='wait'){h.state='ok';h.rt=Date.now()}if(h===cur)renderWin();histUI()}
+  if(h){h.msgs.push({t:Date.now(),x:tx.slice(0,300)});if(h.msgs.length>100)h.msgs.splice(0,h.msgs.length-100);if(h.state==='wait'){h.state='ok';h.rt=Date.now()}if(h===cur)renderWin();histUI()}
   clearTimeout(ct);ct=setTimeout(chatUI,300);if(changed){clearTimeout(tm);tm=setTimeout(refresh,300)}
 }
 let pumpRetryTimer=0;let pumpEpoch=0;
@@ -406,12 +424,15 @@ async function pump(){
   const get=async url=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),6000);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw Error('API HTTP '+r.status);return(await r.text()).trim()}finally{clearTimeout(t)}};
   const epoch=pumpEpoch;
   try{while(fq.length&&epoch===pumpEpoch){const u=fq.shift();
-    try{const a=await get(`https://decapi.me/twitch/avatar/${encodeURIComponent(u.login)}`);if(epoch!==pumpEpoch)break;
-      if(/^https:\/\/static-cdn\.jtvnw\.net\//.test(a))u.av=a;
+    try{if(!u.av){const a=await get(`https://decapi.me/twitch/avatar/${encodeURIComponent(u.login)}`);if(epoch!==pumpEpoch)break;
+      if(/^https:\/\/static-cdn\.jtvnw\.net\//.test(a))u.av=a;}
       const t=await get(`https://decapi.me/twitch/followage/${encodeURIComponent(chan)}/${encodeURIComponent(u.login)}`);if(epoch!==pumpEpoch)break;
       if(/does not follow/i.test(t))u.fol=false;else if(/^\d+\s+(second|minute|hour|day|week|month|year)/i.test(t))u.fol=true;
       ffail=0;clearTimeout(tm);tm=setTimeout(refresh,300)
-    }catch{if(epoch!==pumpEpoch)break;ffail=Math.min(ffail+1,7);fq.unshift(u);schedulePump(Math.min(30000,500*2**ffail));break}
+    }catch{if(epoch!==pumpEpoch)break;u._try=(u._try||0)+1;ffail=Math.min(ffail+1,7);
+      // Requeue at tail; abandon after three retries so no user can starve the queue.
+      if(u._try<3)fq.push(u);else{u._try=0;u.fol=null}
+      if(fq.length) {schedulePump(Math.min(30000,500*2**ffail));break}}
     await new Promise(r=>setTimeout(r,200))}
   }finally{fbusy=0;if(fq.length&&epoch===pumpEpoch&&!pumpRetryTimer)schedulePump(250)}
 }
@@ -441,7 +462,7 @@ function histUI(){histItems=hist[st.m].slice(0,30);
   const ul=$('#hist'),prev=new Map(),flip=!calm&&ul.children.length<=60;
   if(flip)for(const li of ul.children)prev.set(li.dataset.n,li.getBoundingClientRect());
   ul.replaceChildren(...histItems.map((h,i)=>{const li=el('li');li.dataset.i=i;li.dataset.n=h.n+'|'+h.t;
-    li.append(el('span','nm',h.n),el('small','',({ok:'відповів, ',late:'не відповів, ',wait:'очікує, '}[h.state]||'')+ago(h.t)),xbtn('Прибрати'));if(h.login)li.style.cursor='pointer';return li}));
+    li.append((()=>{const name=el(h.login?'button':'span','nm',h.n);if(h.login){name.type='button';name.setAttribute('aria-haspopup','dialog');name.setAttribute('aria-label','Відкрити переможця: '+h.n)}return name})(),el('small','',({ok:'відповів, ',late:'не відповів, ',wait:'очікує, '}[h.state]||'')+ago(h.t)),xbtn('Прибрати переможця '+h.n));return li}));
   if(flip)for(const li of ul.children){const o=prev.get(li.dataset.n);
     if(o){const n=li.getBoundingClientRect(),dx=o.left-n.left,dy=o.top-n.top;if(dx||dy)li.animate?.([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:280,easing:'steps(6)'})}
     else if(prev.size)li.animate?.([{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'none'}],{duration:240})}}
@@ -472,7 +493,7 @@ function ctl(p){
   $('#go').disabled=!!sp||!!paused||!nReal||(autoRunning&&st.spinMode==='auto')||(elim()&&tot()<=st.keepN&&wonAll());
   $('#go').textContent=st.spinMode==='auto'&&!autoRunning?'Запустити авто':'Крутити';
   $('#pause').textContent=paused?'Далі':'Пауза';
-  $('#pause').disabled=!sp&&!autoRunning&&!autoTimer;
+  $('#pause').disabled=!paused&&!sp&&!autoRunning&&!autoTimer&&!(!calm&&ring.length>0);
   $('#undo').disabled=!!sp||!undoS[st.m].length;
   {const b=$('#stopAuto');b.hidden=!elim();b.disabled=!autoRunning;b.style.visibility=autoRunning?'visible':'hidden'}
   $('#clearWinners').disabled=!!sp;
@@ -489,7 +510,7 @@ function buildTh(){$('#thRows').replaceChildren(...TH.map(([k,n])=>{const l=el('
   const r=parseInt(st.custom['--r-sm'])||0;$('#thR').value=r;$('#thRv').textContent=r+'px'}
 function idleText(){return st.m==='wheel'?'Додайте учасників і крутіть':'Підключіться до каналу й відкрийте набір'}
 function apply(){document.body.dataset.m=st.m;applyTheme();document.querySelector('meta[name=theme-color]').content=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
-  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.m===st.m));
+  document.querySelectorAll('#modes button').forEach(b=>{const active=b.dataset.m===st.m;b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active))});
   $('#speed').value=Math.log2(st.speed);spdTxt();$('#theme').value=st.theme;$('#snd').textContent=st.snd?'Звук':'Тихо';$('#rm').checked=!!st.rm;$('#keepN').value=st.keepN;$('#keepN').disabled=!st.rm;$('#shuf').checked=!!st.shuf;$('#wsec').value=st.reply;
   document.querySelectorAll('#spinModes button').forEach(b=>{const active=b.dataset.spin===st.spinMode;b.classList.toggle('on',active);b.setAttribute('aria-pressed',String(active))});
   $('#mxa').checked=!!st.mxAll;$('#mxg').value=st.mxG;document.querySelectorAll('.mx').forEach(x=>x.disabled=!!st.mxAll);
@@ -502,7 +523,7 @@ function addText(t){const m=new Map(db.wheel.map(x=>[x.n.toLowerCase(),x]));let 
 
 $('#roles').append(...ROLES.map(([k,t,i])=>{const l=el('label'),c=el('input'),s=el('small'),x=el('input','mx');
   c.type='checkbox';c.checked=!!st.roles[k];c.onchange=()=>{st.roles[k]=+c.checked;refresh()};
-  x.type='number';x.min=1;x.max=50;x.value=st.mx[k]||1;x.title='Множник квитків';x.onchange=()=>{st.mx[k]=x.value=Math.max(1,Math.min(50,Math.floor(+x.value||1)));refresh()};
+  x.type='number';x.min=1;x.max=50;x.value=st.mx[k]||1;x.title='Множник квитків';x.setAttribute('aria-label','Множник квитків: '+t);x.onchange=()=>{st.mx[k]=x.value=Math.max(1,Math.min(50,Math.floor(+x.value||1)));refresh()};
   s.id='c_'+k;l.append(c,BD[i]?bimg(i):el('span','rb',i),t,s,x);return l}));
 document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{if(sp||b.dataset.m===st.m)return;if(st.m==='tape'){disc();collecting=0;sync()}stopAuto();st.m=b.dataset.m;pos=0;paused=0;needle.x=needle.v=0;document.querySelectorAll('.ptr,.mk').forEach(e=>e.style.transform='');$('#out').textContent='';apply()});
 const spdTxt=()=>{$('#spd').textContent=`${+st.speed.toFixed(2)}×`.replace('.',',')};
@@ -526,17 +547,17 @@ $('#pause').onclick=()=>{
   if(!paused&&autoRunning){if(autoQueued)continueAutoIfQueued();else if(!sp&&!autoTimer)scheduleAutoSpin(150)}
 };
 $('#undo').onclick=undo;
-$('#rm').onchange=e=>{st.rm=+e.target.checked;$('#keepN').disabled=!st.rm;refresh()};
-$('#keepN').onchange=e=>{st.keepN=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.keepN;refresh()};
+$('#rm').onchange=e=>{if(sp){e.target.checked=!!st.rm;return}st.rm=+e.target.checked;$('#keepN').disabled=!st.rm;refresh()};
+$('#keepN').onchange=e=>{if(sp){e.target.value=st.keepN;return}st.keepN=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.keepN;refresh()};
 $('#elimReset').onclick=()=>{if(sp)return;if(!db.wheel.some(x=>x.t<(x.o??x.t)))return toast('Немає що скидати');if(!confirm('Повернути всім початкові квитки? Скасувати це не вдасться.'))return;stopAuto();
   db.wheel.forEach(x=>{x.t=x.o??x.t;delete x.lt});st.resetT=Date.now();undoS.wheel.length=0;$('#out').textContent='↺ Вибування скинуто: усі квитки повернуто';refresh();save()};
-$('#mxa').onchange=e=>{st.mxAll=+e.target.checked;apply()};
-$('#mxg').onchange=e=>{st.mxG=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.mxG;refresh()};
-$('#add').onclick=()=>{addText($('#ta').value);$('#ta').value=''};
+$('#mxa').onchange=e=>{if(sp){e.target.checked=!!st.mxAll;return}st.mxAll=+e.target.checked;apply()};
+$('#mxg').onchange=e=>{if(sp){e.target.value=st.mxG;return}st.mxG=Math.max(1,Math.min(50,Math.floor(+e.target.value||1)));e.target.value=st.mxG;refresh()};
+$('#add').onclick=()=>{if(sp)return;addText($('#ta').value);$('#ta').value=''};
 $('#fbtn').onclick=()=>$('#file').click();
-$('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>1e6||!/\.(txt|csv)$/i.test(f.name))return toast('Файл має бути .txt або .csv до 1 МБ');addText(await f.text())};
-$('#clr').onclick=()=>{stopAuto();db.wheel=[];undoS.wheel.length=0;$('#out').textContent=idleText();refresh()};
-$('#clr2').onclick=()=>{stopAuto();db.tape=[];users.clear();ban.clear();undoS.tape.length=0;$('#out').textContent=idleText();refresh()};
+$('#file').onchange=async e=>{if(sp){e.target.value='';return}const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>1e6||!/\.(txt|csv)$/i.test(f.name))return toast('Файл має бути .txt або .csv до 1 МБ');addText(await f.text())};
+$('#clr').onclick=()=>{if(sp)return;stopAuto();db.wheel=[];undoS.wheel.length=0;$('#out').textContent=idleText();refresh()};
+$('#clr2').onclick=()=>{if(sp)return;stopAuto();db.tape=[];users.clear();ban.clear();undoS.tape.length=0;$('#out').textContent=idleText();refresh()};
 $('#clearWinners').onclick=()=>{
   if(sp)return;
   if(!hist.wheel.length&&!hist.tape.length){$('#out').textContent='Список переможців уже порожній.';return}
@@ -545,17 +566,17 @@ $('#clearWinners').onclick=()=>{
   if($('#win').open)$('#win').close();histUI();save();$('#out').textContent='Усі записи переможців очищено.';ctl();
 };
 $('#conn').onclick=()=>ws||want?(disc(),collecting=0,$('#tst').textContent='відключено',sync()):connect();
-$('#open').onclick=()=>{collecting=!collecting;sync()};
+$('#open').onclick=()=>{if(sp)return;collecting=!collecting;sync()};
 $('#wx').onclick=()=>$('#win').close();
 $('#thBtn').onclick=()=>{ensureCustom();st.theme='custom';apply();buildTh();$('#thDlg').show()};
 $('#thR').oninput=e=>{const n=+e.target.value;st.custom['--r-sm']=n+'px';st.custom['--r-md']=n*2+'px';$('#thRv').textContent=n+'px';applyTheme()};$('#thR').onchange=save;
 $('#thReset').onclick=()=>{st.custom=null;st.theme='dark';apply();$('#thDlg').close();save()};$('#thX').onclick=()=>$('#thDlg').close();
 let lqT;const rl=()=>list(pool());$('#lq').oninput=()=>{clearTimeout(lqT);lqT=setTimeout(rl,150)};$('#lsort').onchange=rl;
 $('#win').addEventListener('close',continueAutoIfQueued);
-$('#list').addEventListener('click',e=>{const li=e.target.closest('li'),x=e.target.closest('button')&&listItems[+li?.dataset.i];if(!x)return;
+$('#list').addEventListener('click',e=>{if(sp)return;const li=e.target.closest('li'),x=e.target.closest('button')&&listItems[+li?.dataset.i];if(!x)return;
   if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()});
-$('#hist').addEventListener('click',e=>{const li=e.target.closest('li'),h=li&&histItems[+li.dataset.i];if(!h)return;
-  if(e.target.closest('button')){hist[st.m]=hist[st.m].filter(y=>y!==h);syncWinners();histUI();save()}else if(h.login)showWin(h)});
+$('#hist').addEventListener('click',e=>{if(sp)return;const li=e.target.closest('li'),h=li&&histItems[+li.dataset.i];if(!h)return;
+  if(e.target.closest('button')?.textContent==='×'){hist[st.m]=hist[st.m].filter(y=>y!==h);syncWinners();histUI();save()}else if(h.login)showWin(h)});
 $('#wsec').onchange=e=>{st.reply=Math.max(0,Math.min(3600,Math.floor(+e.target.value||0)));e.target.value=st.reply;save()};
 $('#wrs').onclick=()=>{if(!cur)return;cur.sec=st.reply;cur.dl=st.reply?Date.now()+st.reply*1e3:0;cur.state='wait';renderWin();histUI();save()};
 $('#rr').onclick=()=>{$('#win').close();autoQueued=false;if(cur){if(cur.state==='wait')cur.state='late';ban.add(cur.n.toLowerCase());dirty=1}save();histUI();spin();continueAutoIfQueued()};
@@ -567,13 +588,13 @@ $('#expw').onclick=()=>{const L=hist[st.m];if(!L.length)return toast('Немає
   L.forEach((h,i)=>rows.push([i+1,h.n,new Date(h.t).toLocaleString('uk-UA'),{ok:'Відповів',late:'Не відповів',wait:'Очікується'}[h.state]||'',h.login||'',h.msgs?h.msgs.filter(m=>!m.pre).length:'']));
   const a=el('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(q).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}));
   a.download=`lototron-${st.m}-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)};
-$('#shuf').onchange=e=>{st.shuf=+e.target.checked;bsig='';refresh()};
+$('#shuf').onchange=e=>{if(sp){e.target.checked=!!st.shuf;return}st.shuf=+e.target.checked;bsig='';refresh()};
 $('#cpw').onclick=async()=>{const L=hist[st.m];if(!L.length)return toast('Немає переможців для копіювання');
   const t=[...L].reverse().map((h,i)=>`${i+1}. ${h.n} — ${new Date(h.t).toLocaleString('uk-UA')}`).join('\n');
   try{await navigator.clipboard.writeText(t)}catch{const a=el('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.append(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch{}a.remove();if(!ok){const f=el('a');f.href=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'}));f.download='lototron-winners.txt';f.click();setTimeout(()=>URL.revokeObjectURL(f.href),1e3);return toast('Буфер обміну недоступний — список збережено у файл')}}
   toast(`Скопійовано переможців: ${L.length}`)};
 $('#imp').onclick=()=>$('#impf').click();
-$('#impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||f.size>5e6)return toast('Файл порожній або завеликий');
+$('#impf').onchange=async e=>{if(sp){e.target.value='';return}const f=e.target.files[0];e.target.value='';if(!f||f.size>5e6)return toast('Файл порожній або завеликий');
   try{const d=JSON.parse(await f.text());if(d.v!==1)throw 0;
     if(!Array.isArray(d.wheel)||!Array.isArray(d.tape)||!d.hist||typeof d.hist!=='object')throw Error('Invalid import');
     const wheel=cleanWheel(d.wheel),tape=cleanTape(d.tape),wheelHist=cleanHist(Array.isArray(d.hist.wheel)?d.hist.wheel:[]),tapeHist=cleanHist(Array.isArray(d.hist.tape)?d.hist.tape:[]);
@@ -584,7 +605,7 @@ $('#impf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f|
   catch{toast('Не вдалося прочитати файл')}};
 {const t=ls('lt_tw')||{};if(t.ch)$('#ch').value=t.ch;if(t.kw)$('#kw').value=t.kw;if('any' in t)$('#any').checked=!!t.any;
   const sv=()=>ls('lt_tw',{ch:$('#ch').value,kw:$('#kw').value,any:$('#any').checked});['#ch','#kw','#any'].forEach(q=>$(q).addEventListener('change',sv))}
-addEventListener('keydown',e=>{if(e.target.closest?.('input,textarea,select,button,dialog')||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
+addEventListener('keydown',e=>{if(e.target.closest?.('input,textarea,select,button,dialog,a,summary,[contenteditable],[tabindex],[role=button]')||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
   if(e.code==='Space'||k==='enter'){e.preventDefault();spin()}else if(k==='p')$('#pause').click();else if(k==='u')$('#undo').click()});
 let errT=0;const onErr=e=>{console.error(e.error||e.reason||e);if(Date.now()-errT>1e4){errT=Date.now();toast('Сталася помилка. Якщо щось не працює — оновіть сторінку.')}};addEventListener('error',onErr);addEventListener('unhandledrejection',onErr);
 addEventListener('offline',()=>toast('Немає мережі: чат і аватарки недоступні'));addEventListener('online',()=>toast('Мережу відновлено'));
