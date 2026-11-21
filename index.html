@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'unsafe-inline';style-src 'unsafe-inline' https://fonts.googleapis.com;font-src https://fonts.gstatic.com;img-src data: blob: https://static-cdn.jtvnw.net;connect-src wss://irc-ws.chat.twitch.tv https://decapi.me;object-src 'none';base-uri 'none';form-action 'none';upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#070b09">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%23070b09'/%3E%3Cpath d='M2 1h4v1h1v4H6v1H2V6H1V2h1z' fill='%233ee37a'/%3E%3Crect x='3' y='3' width='2' height='2' fill='%23f5b73a'/%3E%3C/svg%3E">
 <script>try{const s=JSON.parse(localStorage.getItem("lt_set"))||{},t=s.theme,r=document.documentElement;if(["dark","light","night"].includes(t))r.dataset.theme=t;else if(t==="custom"&&s.custom){r.dataset.theme="custom";for(const k in s.custom)if(/^--[a-z0-9-]+$/.test(k)&&/^(#[0-9a-f]{6}|\d{1,2}px)$/i.test(s.custom[k]))r.style.setProperty(k,s.custom[k])}else if(!t&&matchMedia("(prefers-color-scheme: light)").matches)r.dataset.theme="light"}catch{}</script>
 <meta name="description" content="Лототрон: колесо фортуни та рухома стрічка для розіграшів із чату Twitch">
 <link rel="preconnect" href="https://static-cdn.jtvnw.net"><link rel="preconnect" href="https://decapi.me"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
@@ -148,7 +149,7 @@ h1:hover::before{opacity:1;color:var(--ac2);clip-path:inset(0 0 55% 0);animation
       </div>
     </div>
     <div class="row opt"><label class="row"><input type="checkbox" id="shuf"> Перемішувати перед кожним прокрутом</label></div>
-    <div class="row opt" data-for="wheel"><select id="cgSpr" aria-label="Заглушка центру колеса"><option value="star">Зірка</option><option value="coin">Монета</option><option value="heart">Серце</option><option value="skull">Череп</option><option value="gem">Самоцвіт</option><option value="none">Без заглушки</option></select><button id="cgBtn">Центр колеса</button><button id="cgX" hidden aria-label="Прибрати зображення центру">×</button><label class="row"><input type="checkbox" id="cgRot"> Обертати</label><input type="file" id="cgFile" accept="image/gif,image/png,image/webp,image/jpeg,image/svg+xml" hidden aria-label="Зображення для центру колеса"></div>
+    <div class="row opt" data-for="wheel"><select id="cgSpr" aria-label="Заглушка центру колеса"><option value="star">Зірка</option><option value="coin">Монета</option><option value="heart">Серце</option><option value="skull">Череп</option><option value="gem">Самоцвіт</option><option value="none">Без заглушки</option></select><button id="cgBtn">Центр колеса</button><button id="cgX" hidden aria-label="Прибрати зображення центру">×</button><label class="row"><input type="checkbox" id="cgRot"> Обертати</label><input type="file" id="cgFile" accept="image/gif,image/png,image/webp,image/jpeg" hidden aria-label="Зображення для центру колеса"></div>
     <div class="col" data-for="wheel" style="width:100%;gap:4px;text-align:left">
       <label class="row" for="rm"><input type="checkbox" id="rm" checked> <strong>Режим вибування</strong></label>
       <small class="mode-note">Увімкнено — квиток, що випав, вибуває і записується у «Вибування». Розіграш триває, доки не залишиться вказана кількість останніх квитків — їхні власники стають переможцями. Режим «Авто» доступний лише тут.</small>
@@ -198,7 +199,7 @@ let qw=0;const ls=(k,v)=>{try{return v===undefined?JSON.parse(localStorage.getIt
 function storageWarning(){const e=document.getElementById('storageWarning');if(e)e.hidden=false;else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',storageWarning,{once:true})}
 const u32=()=>crypto.getRandomValues(new Uint32Array(1))[0];
 const rnd=()=>{const a=crypto.getRandomValues(new Uint32Array(2));return(a[0]*2**21+(a[1]>>>11))/2**53};
-const randInt=n=>{const lim=Math.floor(2**32/n)*n;let x;do x=u32();while(x>=lim);return x%n};
+const randInt=n=>{if(n<=1)return 0;const lim=Math.floor(2**32/n)*n;let x;do x=u32();while(x>=lim);return x%n};
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=randInt(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
 const frac=x=>x-Math.floor(x),col=i=>`hsl(${i*137.5%360} 65% 48%)`;
 const ago=t=>{const s=(Date.now()-t)/1e3;if(s<10)return'щойно';const u=[[60,1,'с'],[3600,60,'хв'],[86400,3600,'год'],[604800,86400,'дн'],[1/0,604800,'тиж']].find(x=>s<x[0]);return`${Math.floor(s/u[1])} ${u[2]} тому`};
@@ -228,7 +229,7 @@ const cleanTape=a=>a.filter(x=>x&&typeof x.login==='string'&&/^[a-z0-9_]{3,25}$/
 const cleanHist=a=>a.filter(h=>h&&typeof h.n==='string'&&h.n.trim()&&Number.isFinite(Number(h.t))&&Number(h.t)>0).slice(0,100).map(h=>({n:h.n.slice(0,40),t:Number(h.t),...(h.fin?{fin:1}:{}),...(typeof h.login==='string'&&/^[a-z0-9_]{3,25}$/i.test(h.login)?{login:h.login.toLowerCase()}:{}),state:['wait','ok','late'].includes(h.state)?h.state:undefined,sec:Number.isFinite(+h.sec)?Math.max(0,Math.min(3600,+h.sec)):0,dl:Number.isFinite(+h.dl)?Math.max(0,+h.dl):0,rt:Number.isFinite(+h.rt)?Math.max(0,+h.rt):0,msgs:Array.isArray(h.msgs)?h.msgs.slice(-100).filter(m=>Number.isFinite(+m?.t)&&typeof m.x==='string').map(m=>({t:+m.t,x:m.x.slice(0,300),pre:!!m.pre})):[]}));
 const db={wheel:cleanWheel(storedArray('lt_wheel')),tape:cleanTape(storedArray('lt_tape'))},hist={wheel:cleanHist(storedArray('lt_wh')),tape:cleanHist(storedArray('lt_th'))};
 const ban=new Set((Array.isArray(ls('lt_ban'))?ls('lt_ban'):[]).filter(x=>typeof x==='string').slice(0,5000).map(x=>x.toLowerCase())),users=new Map(db.tape.map(u=>(delete u.leftT,[u.login,u])));
-let ring=[],nReal=0,pos=0,sp=null,paused=0,dirty=0,W=0,P=1,cards=[],hot=-1,cur=null,ws=null,chan='',want=0,collecting=0,retry=0,lastTick=0,fq=[],fbusy=0,ffail=0,ac,tm,ct,tPrev=performance.now();
+let ring=[],nReal=0,pos=0,sp=null,paused=0,dirty=0,W=0,P=1,cards=[],hot=-1,cur=null,ws=null,chan='',want=0,collecting=0,retry=0,lastTick=0,lastDrift=0,fq=[],fbusy=0,ffail=0,ac,tm,ct,tPrev=performance.now();
 let autoRunning=false,autoTimer=0,autoQueued=false;
 const chat=[],undoS={wheel:[],tape:[]},seen=new Set();const winnerByLogin=new Map();const syncWinners=()=>{winnerByLogin.clear();for(const h of hist.tape)if(h.login&&!winnerByLogin.has(h.login))winnerByLogin.set(h.login,h)};syncWinners();let bsig='',lastRx=Date.now();
 
@@ -269,11 +270,12 @@ const slotsOf=p=>{const key=st.m+'|'+p.map(x=>`${x.n}:${x.t}:${x.u?.av||''}`).jo
   slotCacheKey=key;slotCache=o;return o};
 const pad=real=>{const T=real.length;if(!T)return Array.from({length:12},()=>({ph:1,n:'?'}));const k=Math.ceil(12/T);return Array.from({length:T*k},(_,i)=>real[i%T])};
 function build(p){const real=slotsOf(p),sg=st.m+$('#tp').clientWidth+real.map(x=>x.n+'|'+(x.u?.av||'')).join(';');if(sg===bsig){dirty=0;nReal=real.length;return}bsig=sg;nReal=real.length;const base=st.shuf?shuffle([...real]):[...real];ring=st.m==='wheel'?base:pad(base);dirty=0;st.m==='wheel'?drawWheel():drawTape()}
-function drawWheel(){const c=$('#cv'),g=c.getContext('2d'),R=c.width/2,S=ring.length,d=2*Math.PI/S;if(!g){toast('Canvas недоступний у цьому браузері');return}g.clearRect(0,0,c.width,c.height);
+function drawWheel(){const c=$('#cv'),dpr=Math.min(window.devicePixelRatio||1,2),css=c.clientWidth||c.width||840,sz=Math.round(css*dpr);if(c.width!==sz)c.width=c.height=sz;
+  const g=c.getContext('2d'),R=sz/2,S=ring.length,d=2*Math.PI/S;if(!g){toast('Canvas недоступний у цьому браузері');return}g.clearRect(0,0,sz,sz);
   if(!S){g.fillStyle='#64748b55';g.beginPath();g.arc(R,R,R,0,7);g.fill();return}
-  g.strokeStyle='rgba(0,0,0,.3)';g.lineWidth=1.5;
+  g.strokeStyle='rgba(0,0,0,.3)';g.lineWidth=1.5*dpr;
   ring.forEach((x,i)=>{const a0=i*d-Math.PI/2;g.fillStyle=col(x.c);g.beginPath();g.moveTo(R,R);g.arc(R,R,R,a0,a0+d);g.closePath();g.fill();g.stroke();
-    if(d>.07){g.save();g.translate(R,R);g.rotate(a0+d/2);g.fillStyle='#fff';g.font=`bold ${S>30?13:S>16?17:22}px system-ui`;g.textAlign='right';g.shadowColor='#000';g.shadowBlur=4;g.fillText(x.n.slice(0,18),R-24,6);g.restore()}})}
+    if(d>.07){g.save();g.translate(R,R);g.rotate(a0+d/2);g.fillStyle='#fff';g.font=`bold ${Math.round((S>30?13:S>16?17:22)*dpr)}px system-ui`;g.textAlign='right';g.shadowColor='#000';g.shadowBlur=4*dpr;g.fillText(x.n.slice(0,18),R-24*dpr,6*dpr);g.restore()}})}
 // Error events do not retain property handlers across cloneNode(true).
 $('#trk').addEventListener('error',e=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src!==FALL)i.src=FALL},true);
 function drawTape(){const trk=$('#trk'),vw=$('#tp').clientWidth||600,S=ring.length;trk.textContent='';hot=-1;W=150*S;P=Math.max(1,Math.ceil(vw/2/W));
@@ -290,7 +292,7 @@ function frame(now){try{if(!document.hidden)frame0(now);else tPrev=now}catch(e){
 function frame0(now){const dt=Math.min(100,now-tPrev);tPrev=now;
   if(!paused){
     if(sp){sp.el+=dt;const k=Math.min(1,sp.el/sp.ms);pos=sp.from+(sp.to-sp.from)*(1-(1-k)**4);const q=seg(pos);if(q!==sp.last){sp.last=q;tick(now)}if(k>=1){const x=sp.s;sp=null;done(x)}}
-    else if(ring.length&&!calm)pos=frac(pos+(st.m==='wheel'?dt/4e4:dt*.07/Math.max(1,W)));
+    else if(nReal&&!calm&&now-lastDrift>33){lastDrift=now;pos=frac(pos+(st.m==='wheel'?dt/4e4:dt*.07/Math.max(1,W)))}
     place();
     if(!needle.still){needle.step(Math.min(dt,50)/1000);const e=st.m==='wheel'?$('.ptr'):$('.mk');
       if(needle.still){needle.x=needle.v=0;e.style.transform=''}
@@ -311,7 +313,8 @@ function spin(fromAuto=false){
   // Ensure the sampled winner appears at the visual landing point.
   let ids=[];for(let k=0;k<S;k++)if(!ring[k].ph&&ring[k].n===winner.n)ids.push(k);
   if(!ids.length){const k=randInt(S);ring[k]={n:winner.n,u:winner.u,c:eligible.indexOf(winner)};
-    if(st.m==='wheel')drawWheel();else drawTape();ids=[k]}
+    // Force a rebuild so the forced slot is not kept in the ring for the next spin.
+    dirty=1;bsig='';if(st.m==='wheel')drawWheel();else drawTape();ids=[k]}
   const i=ids[randInt(ids.length)],f=(i+.05+.9*rnd())/S,from=pos,turns=(st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W)))+randInt(3);
   sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:{n:winner.n,u:winner.u,c:eligible.indexOf(winner)}};
   $('#out').textContent='???';$('#announce').textContent='';SFX.start();ctl();
@@ -421,6 +424,8 @@ function line(l){
   clearTimeout(ct);ct=setTimeout(chatUI,300);if(changed){clearTimeout(tm);tm=setTimeout(refresh,300)}
 }
 let pumpRetryTimer=0;let pumpEpoch=0;
+let folWarnT=0;const folWarn=()=>{if(st.roles.follow&&st.roles.nofollow)return;if(Date.now()-folWarnT<6e4)return;folWarnT=Date.now();
+  toast('DecAPI не має доступу до списку фоловерів цього каналу. Увімкніть обидві галочки: «Фоловери» та «Не фоловери».')};
 function schedulePump(delay){if(pumpRetryTimer)return;pumpRetryTimer=setTimeout(()=>{pumpRetryTimer=0;pump()},delay)}
 async function pump(){
   if(fbusy||!fq.length)return;fbusy=1;
@@ -431,6 +436,7 @@ async function pump(){
       if(/^https:\/\/static-cdn\.jtvnw\.net\//.test(a))u.av=a;}
       const t=await get(`https://decapi.me/twitch/followage/${encodeURIComponent(chan)}/${encodeURIComponent(u.login)}`);if(epoch!==pumpEpoch)break;
       if(/does not follow/i.test(t))u.fol=false;else if(/^\d+\s+(second|minute|hour|day|week|month|year)/i.test(t))u.fol=true;
+      else if(/auth|token|moderator|error/i.test(t)){u.fol=null;folWarn()}
       ffail=0;clearTimeout(tm);tm=setTimeout(refresh,300)
     }catch{if(epoch!==pumpEpoch)break;u._try=(u._try||0)+1;ffail=Math.min(ffail+1,7);
       // Requeue at tail; abandon after three retries so no user can starve the queue.
@@ -443,11 +449,12 @@ async function pump(){
 /* ---- UI ---- */
 function sync(){const on=!!ws||want;$('#conn').textContent=on?'Відключитися':'Підключитися';$('#open').disabled=!on;$('#open').textContent=collecting?'Закрити набір':'Відкрити набір';$('#open').classList.toggle('p',!collecting)}
 let listSig='',listItems=[],histItems=[],flashName='';
-const popOut=win=>{if(calm)return;const o=$('#out'),t=o.textContent;
+let popT=0;const popOut=win=>{clearInterval(popT);if(calm)return;const o=$('#out'),t=o.textContent;
   if(!win)return o.animate?.([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(-4px)'},{transform:'none'}],{duration:300,easing:'steps(4)'});
   if(!t||t.length>60)return;const vis=el('span');vis.setAttribute('aria-hidden','true');o.replaceChildren(el('span','sr',t),vis);
-  let k=0;const G='01#%&@$*+=',id=setInterval(()=>{vis.textContent=[...t].map((c,i)=>c===' '||i<k?c:G[randInt(G.length)]).join('');
-    if(k++>=t.length){clearInterval(id);const f=o.firstChild;if(f&&f.className==='sr'&&f.textContent===t)o.textContent=t}},45)};
+  let k=0;const G='01#%&@$*+=';popT=setInterval(()=>{if(!vis.isConnected){clearInterval(popT);return}
+    vis.textContent=[...t].map((c,i)=>c===' '||i<k?c:G[randInt(G.length)]).join('');
+    if(k++>=t.length){clearInterval(popT);const f=o.firstChild;if(f&&f.className==='sr'&&f.textContent===t)o.textContent=t}},45)};
 function list(p){hud(p);const q=$('#lq').value.trim().toLowerCase(),o=$('#lsort').value;
   let a=q?p.filter(x=>x.n.toLowerCase().includes(q)):p;
   if(o)a=[...a].sort(o==='td'?(x,y)=>y.t-x.t:o==='ta'?(x,y)=>x.t-y.t:(x,y)=>x.n.localeCompare(y.n,'uk'));
@@ -579,6 +586,7 @@ $('#thR').oninput=e=>{const n=+e.target.value;st.custom['--r-sm']=n+'px';st.cust
 $('#thReset').onclick=()=>{st.custom=null;st.theme='dark';apply();$('#thDlg').close();save()};$('#thX').onclick=()=>$('#thDlg').close();
 let lqT;const rl=()=>list(pool());$('#lq').oninput=()=>{clearTimeout(lqT);lqT=setTimeout(rl,150)};$('#lsort').onchange=rl;
 $('#win').addEventListener('close',continueAutoIfQueued);
+$('#win').addEventListener('click',e=>{if(e.target===$('#win'))$('#win').close()});
 $('#list').addEventListener('click',e=>{if(sp)return;const li=e.target.closest('li'),x=e.target.closest('button')&&listItems[+li?.dataset.i];if(!x)return;
   if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()});
 $('#list').addEventListener('change',e=>{const inp=e.target.closest('.ti');if(!inp)return;const li=inp.closest('li'),x=listItems[+li?.dataset.i];if(!x)return;if(sp){inp.value=x.t;return}
@@ -615,7 +623,7 @@ $('#impf').onchange=async e=>{if(sp){e.target.value='';return}const f=e.target.f
   catch{toast('Не вдалося прочитати файл')}};
 {const t=ls('lt_tw')||{};if(t.ch)$('#ch').value=t.ch;if(t.kw)$('#kw').value=t.kw;if('any' in t)$('#any').checked=!!t.any;
   const sv=()=>ls('lt_tw',{ch:$('#ch').value,kw:$('#kw').value,any:$('#any').checked});['#ch','#kw','#any'].forEach(q=>$(q).addEventListener('change',sv))}
-addEventListener('keydown',e=>{if(e.target.closest?.('input,textarea,select,button,dialog,a,summary,[contenteditable],[tabindex],[role=button]')||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
+addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#thDlg').open){e.preventDefault();$('#thDlg').close();$('#thBtn').focus();return}if(e.target.closest?.('input,textarea,select,button,dialog,a,summary,[contenteditable],[tabindex],[role=button]')||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
   if(e.code==='Space'||k==='enter'){e.preventDefault();spin()}else if(k==='p')$('#pause').click();else if(k==='u')$('#undo').click()});
 let errT=0;const onErr=e=>{console.error(e.error||e.reason||e);if(Date.now()-errT>1e4){errT=Date.now();toast('Сталася помилка. Якщо щось не працює — оновіть сторінку.')}};addEventListener('error',onErr);addEventListener('unhandledrejection',onErr);
 addEventListener('offline',()=>toast('Немає мережі: чат і аватарки недоступні'));addEventListener('online',()=>toast('Мережу відновлено'));
@@ -639,7 +647,7 @@ async function cgInit(){cgApply();const initialSprite=st.cgSpr;try{let b=await k
 $('#cgSpr').onchange=e=>{st.cgSpr=e.target.value;if(cgUrl){cgSet(null);kvSet('cg',null).catch(()=>toast('Не вдалося видалити попереднє зображення центру'))}else cgApply();save()};
 $('#cgBtn').onclick=()=>$('#cgFile').click();
 $('#cgFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
-  if(!/^image\/(gif|png|webp|jpeg|svg\+xml)$/.test(f.type)||f.size>5e6)return toast('Потрібне зображення GIF/PNG/WebP/JPEG/SVG до 5 МБ');
+  if(!/^image\/(gif|png|webp|jpeg)$/.test(f.type)||f.size>5e6)return toast('Потрібне зображення GIF/PNG/WebP/JPEG до 5 МБ');
   kvSet('cg',f).then(()=>cgSet(f)).catch(()=>{cgSet(f);toast('Сховище недоступне: зображення діє лише до закриття сторінки')})};
 $('#cgX').onclick=()=>{kvSet('cg',null).catch(()=>{});cgSet(null)};
 $('#cgRot').onchange=e=>{cgRot=e.target.checked;ls('lt_cgr',+cgRot);cgApply()};
