@@ -46,7 +46,30 @@ aside :is(button,select,input:not([type=checkbox]),textarea){padding:5px 10px;mi
 .mk{position:absolute;left:50%;top:0;bottom:0;width:4px;z-index:4;transform:translateX(-50%);background:var(--ac2)}
 body[data-m=tape] .wheel,body[data-m=wheel] [data-for=tape],body[data-m=tape] [data-for=wheel]{display:none!important}
 body[data-m=tape] .tape{display:block}
-#out{min-height:1.6em;padding:6px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm);font-size:clamp(.95rem,1.2vw,1.15rem);font-weight:800;text-align:center;word-break:break-word}
+#out{min-height:1.6em;padding:10px 14px;background:var(--s2);border:2px solid var(--ac);border-radius:var(--r-md);box-shadow:inset 0 0 18px color-mix(in srgb,var(--ac) 12%,transparent);font-size:clamp(1.1rem,1.6vw,1.4rem);font-weight:800;text-align:center;word-break:break-word;font-family:ui-monospace,'Cascadia Code','Fira Code',Consolas,monospace}
+.odds{color:var(--ac2);font-variant-numeric:tabular-nums;min-width:3.4em;text-align:right;display:inline-block}
+/* Stage sticks to the top so the wheel/tape never scrolls away on long lists */
+@media(min-width:961px){.stage{position:sticky;top:76px;height:calc(100vh - 96px);justify-content:space-evenly}.stage .wheel{width:min(100%,58vh,560px)}}
+/* Tabs for the sidebar sections */
+.tabs{margin:2px 0 8px}.tabs button{min-height:32px;padding:4px 10px;font-size:.85rem}
+body[data-tab=list] #elimBox,body[data-tab=hist] #elimBox{display:none!important}
+body[data-tab=elim] #list,body[data-tab=hist] #list{display:none!important}
+body[data-tab=list] #histBox,body[data-tab=elim] #histBox{display:none!important}
+/* Live winners strip under the tape */
+.podium{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:0}
+.podium[hidden]{display:none}
+.pod{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r-sm)}
+.pod .av{width:26px;height:26px;font-size:14px}
+.pod b{font-size:.85rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* CSPRNG trust badge */
+.csprng{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid var(--bd);border-radius:99px;background:var(--s2);color:var(--mu);font-size:.72rem;letter-spacing:.06em;white-space:nowrap}
+/* OBS overlay mode: scene only, transparent background */
+body.obs header,body.obs aside{display:none!important}
+body.obs main{display:block;background:transparent}
+body.obs::after,body.obs::before{display:none!important}
+body.obs .card.stage{background:transparent;border:0;box-shadow:none;background-image:none}
+body.obs .stage{min-height:100vh;height:100vh}
+body.obs #out{border-width:3px}
 #go{flex:1;padding:8px 14px;font-size:1rem}
 .spin-settings{width:100%;justify-content:space-between;gap:8px}
 .spin-settings .seg{align-items:center}
@@ -126,6 +149,7 @@ h1:hover::before{opacity:1;color:var(--ac2);clip-path:inset(0 0 55% 0);animation
 <header>
   <h1 data-t="Лототрон">Лототрон</h1>
   <div class="hud" id="hud" role="group" aria-label="Стан розіграшу"><span class="dot" id="hDot"></span><span id="hTxt"><span class="fld"><b>Учасників</b><output id="hEnt">000</output></span><span class="fld"><b>Квитків</b><output id="hTix">000</output></span></span></div>
+  <span class="csprng" title="Використовується апаратний криптографічний генератор Web Crypto API з відсіканням похибки (Rejection Sampling). Результат неможливо підробити чи передбачити.">🛡️ CSPRNG Fair Play</span>
   <div class="seg" id="modes" role="group" aria-label="Режим розіграшу"><button data-m="wheel">Колесо Фортуни</button><button data-m="tape">Рухома стрічка</button></div>
   <div class="row">
     <label class="row" title="Швидкість обертання"><span class="lbl">Швидкість</span><input type="range" id="speed" min="-2" max="3" step="0.05" aria-label="Швидкість обертання"><output id="spd" for="speed">1×</output></label>
@@ -137,10 +161,11 @@ h1:hover::before{opacity:1;color:var(--ac2);clip-path:inset(0 0 55% 0);animation
   <section class="card stage">
     <div class="wheel"><i class="ptr"></i><canvas id="cv" width="840" height="840" role="img" aria-label="Колесо фортуни; список учасників наведено праворуч"></canvas><img id="cgif" class="center-gif" alt="" hidden></div>
     <div class="tape" id="tp"><div class="trk" id="trk"></div><i class="mk"></i></div>
-  </section>
-  <aside class="card">
     <output id="out"></output><div id="announce" class="sr" role="status" aria-live="polite"></div>
     <div class="row ctl"><button class="p" id="go">Крутити</button><button id="stopAuto" hidden>Зупинити авто</button><button id="pause" disabled>Пауза</button><button id="undo" disabled>↩ Скасувати</button></div>
+    <div class="podium" id="podium" hidden aria-label="Останні переможці"></div>
+  </section>
+  <aside class="card">
     <div class="row spin-settings" aria-label="Керування обертанням">
       <span><strong>Режим спінів:</strong></span>
       <div class="seg" id="spinModes" role="group" aria-label="Режим спінів">
@@ -171,12 +196,13 @@ h1:hover::before{opacity:1;color:var(--ac2);clip-path:inset(0 0 55% 0);animation
       <details open><summary>Чат каналу</summary><div class="chat" id="chat"></div></details>
       <button id="clr2">Очистити набір</button>
     </div>
+    <div class="seg tabs" id="tabs" role="group" aria-label="Секції"><button type="button" data-tab="list" class="on" aria-pressed="true">Учасники</button><button type="button" data-tab="elim" aria-pressed="false">Вибування</button><button type="button" data-tab="hist" aria-pressed="false">Історія</button></div>
     <h3>Учасники <small id="cnt">0</small></h3><div class="row"><input type="search" id="lq" placeholder="Пошук учасника…" aria-label="Пошук учасника" autocomplete="off"><select id="lsort" aria-label="Сортування списку"><option value="">Порядок додавання</option><option value="td">Квитки ↓</option><option value="ta">Квитки ↑</option><option value="n">Ім'я А–Я</option></select></div>
     <ul id="list"></ul>
     <div id="elimBox" role="region" aria-labelledby="elimLabel" hidden><h3 id="elimLabel">Вибування</h3><div id="elimCnt" class="stat-row"><span class="fld"><b>Вибули</b><output id="elOut">0</output></span><span class="fld"><b>Лишився 1</b><output id="elWarn">0</output></span><span class="fld"><b>Квитків</b><output id="elTix">0</output></span><span class="fld"><b>Переможцям</b><output id="elKeep">1</output></span></div><small class="lg"><i class="sw warn"></i>лишився 1 квиток<i class="sw out"></i>вибув з розіграшу</small> <button id="elimReset" title="Повернути всім початкову кількість квитків">↺ Скинути вибування</button><ul id="elim"></ul></div>
-    <div class="section-head"><h3>Переможці</h3><button id="clearWinners" type="button">Очистити всіх переможців</button></div>
-    <ul id="hist"></ul>
-    <div class="row"><button id="exp">Експорт даних</button><button id="expw">Переможці (CSV)</button><button id="cpw">Копіювати переможців</button><button id="imp">Імпорт</button><input type="file" id="impf" accept=".json" hidden aria-label="Імпорт даних"></div>
+    <div id="histBox"><div class="section-head"><h3>Переможці</h3><button id="clearWinners" type="button">Очистити всіх переможців</button></div>
+    <ul id="hist"></ul></div>
+    <div class="row"><button id="share">🔗 Поділитися колесом</button><button id="exp">Експорт даних</button><button id="expw">Переможці (CSV)</button><button id="cpw">Копіювати переможців</button><button id="imp">Імпорт</button><input type="file" id="impf" accept=".json" hidden aria-label="Імпорт даних"></div>
   </aside>
 </main>
 <div id="toast" role="alert"></div><div id="storageWarning" role="alert" hidden style="position:fixed;bottom:0;left:0;right:0;z-index:100;padding:12px 20px;background:#7f1d1d;color:#fff;text-align:center">Не вдалося зберегти зміни. Експортуйте дані перед закриттям сторінки. <button type="button" id="storageRetry" style="margin-left:12px">Спробувати ще</button></div>
@@ -190,7 +216,7 @@ h1:hover::before{opacity:1;color:var(--ac2);clip-path:inset(0 0 55% 0);animation
     <div class="row"><b id="wcd"></b><div class="bar"><i id="wbar"></i></div></div>
     <p id="wst"></p><div class="msgs" id="wmsg"></div>
     <div class="row"><label class="row">Таймер, с <input type="number" id="wsec" aria-label="Таймер, секунди" min="0" max="3600" style="max-width:100px"></label><button id="wrs">Перезапустити</button></div>
-    <div class="row"><button id="rr" class="p">Рерол</button><button id="wx">Закрити</button></div>
+    <div class="row"><button id="rr" class="p">Рерол</button><button id="wcard">📸 Картка переможця</button><button id="wx">Закрити</button></div>
   </div>
 </dialog>
 <script>
@@ -291,8 +317,7 @@ let lastTransform='';function place(){if(st.m==='wheel'){const v=`rotate(${pos*3
 function frame(now){try{if(!document.hidden)frame0(now);else tPrev=now}catch(e){console.error(e);if(sp){sp=null;ctl()}}requestAnimationFrame(frame)}
 function frame0(now){const dt=Math.min(100,now-tPrev);tPrev=now;
   if(!paused){
-    if(sp){sp.el+=dt;const k=Math.min(1,sp.el/sp.ms);pos=sp.from+(sp.to-sp.from)*(1-(1-k)**4);const q=seg(pos);if(q!==sp.last){sp.last=q;tick(now)}if(k>=1){const x=sp.s;sp=null;done(x)}}
-    else if(nReal&&!calm&&now-lastDrift>33){lastDrift=now;pos=frac(pos+(st.m==='wheel'?dt/4e4:dt*.07/Math.max(1,W)))}
+    if(sp){sp.el+=dt;const k=Math.min(1,sp.el/sp.ms);pos=sp.from+(sp.to-sp.from)*(1-(1-k)**4.5);const q=seg(pos);if(q!==sp.last){sp.last=q;tick(now);const seg0=ring[st.m==='wheel'?q:ring.length-1-q];if(seg0&&!seg0.ph)$('#out').textContent='🎲 '+seg0.n}if(k>=1){const x=sp.s;sp=null;done(x)}}else if(nReal&&!calm&&now-lastDrift>33){lastDrift=now;pos=frac(pos+(st.m==='wheel'?dt/4e4:dt*.07/Math.max(1,W)))}
     place();
     if(!needle.still){needle.step(Math.min(dt,50)/1000);const e=st.m==='wheel'?$('.ptr'):$('.mk');
       if(needle.still){needle.x=needle.v=0;e.style.transform=''}
@@ -316,7 +341,7 @@ function spin(fromAuto=false){
     // Force a rebuild so the forced slot is not kept in the ring for the next spin.
     dirty=1;bsig='';if(st.m==='wheel')drawWheel();else drawTape();ids=[k]}
   const i=ids[randInt(ids.length)],f=(i+.05+.9*rnd())/S,from=pos,turns=(st.m==='wheel'?5:Math.max(1,Math.ceil(3000/W)))+randInt(3);
-  sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:{n:winner.n,u:winner.u,c:eligible.indexOf(winner)}};
+  sp={from,to:from+turns+frac(-f-from),ms:5200/st.speed*(.85+.3*rnd()),el:0,last:seg(from),s:{n:winner.n,u:winner.u,c:eligible.indexOf(winner),tot:total,tt:Math.max(0,Math.floor(winner.t))}};
   $('#out').textContent='???';$('#announce').textContent='';SFX.start();ctl();
 }
 function tick(now){const dt=now-lastTick;lastTick=now;if(dt<25)return;const vel=Math.min(1,50/Math.max(dt,12));SFX.tick(vel);if(!calm)needle.v-=vel*11}
@@ -328,7 +353,8 @@ function finalize(){const hs=db.wheel.filter(x=>x.t>0&&!hist.wheel.some(h=>h.fin
   return hs}
 function done(x){
   pos=frac(pos);place();
-  const h={n:x.n,t:Date.now()},u={h};let win=true;
+  const odds=x.tot?` (${(x.tt/x.tot*100).toFixed(x.tt/x.tot<.01?2:1)}%)`:'';
+  const h={n:x.n,t:Date.now(),tot:x.tot,tt:x.tt},u={h};let win=true;
   if(st.m==='wheel'){
     if(elim()){
       win=false;delete u.h;
@@ -336,9 +362,9 @@ function done(x){
       if(p){p.o??=p.t;u.p={n:p.n,lt:p.lt};p.t-=1;p.lt=Date.now();dirty=1;flashName=p.n;
         $('#out').textContent=p.t?`У ${p.n} вибуває квиток (лишилось ${p.t})`:`${p.n} вибув(ла) з розіграшу`;warnLeft(p.n,p.t)}
       if(tot()<=st.keepN){u.hs=finalize();win=true}
-    }else{$('#out').textContent=''+x.n;hist.wheel.unshift(h)}
+    }else{$('#out').textContent=''+x.n+odds;hist.wheel.unshift(h)}
   }else{
-    $('#out').textContent=''+x.n;
+    $('#out').textContent=''+x.n+odds;
     cards[hot]?.classList.add('win');setTimeout(()=>document.querySelectorAll('.cd.win').forEach(c=>c.classList.remove('win')),3e3);
     {const key=x.n.toLowerCase();ban.add(key);u.ban=key;dirty=1}
     Object.assign(h,{login:x.u.login,state:'wait',sec:st.reply,dl:st.reply?Date.now()+st.reply*1e3:0,msgs:(x.u.recent||[]).map(m=>({...m,pre:1}))});hist.tape.unshift(h);syncWinners();setTimeout(()=>showWin(h),700);
@@ -349,7 +375,7 @@ function done(x){
   if(st.m==='wheel'&&dirty)build(pool());
   setTimeout(()=>{if(!sp&&dirty){build(pool());list(pool());ctl()}},2500);
   for(const k in hist)if(hist[k].length>150)hist[k].length=150;
-  list(pool());elimUI();histUI();ctl();save();
+  list(pool());elimUI();histUI();podium();ctl();save();
   if(autoRunning&&st.spinMode==='auto')scheduleAutoSpin(850);
 }
 function scheduleAutoSpin(delay=650){
@@ -390,6 +416,21 @@ function renderWin(light){const h=cur;if(!h||!$('#win').open)return;const left=M
   $('#wmsg').replaceChildren(...h.msgs.map(m=>el('div',m.pre?'pre':'',`${new Date(m.t).toLocaleTimeString('uk-UA')} ${m.x}`)));
   $('#rr').classList.toggle('p',h.state==='late');
 }
+/* Shareable winner certificate card (canvas PNG) */
+function drawCard(h){try{const u=users.get(h.login);const W=640,H=400,cv=el('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  g.fillStyle='#070b09';g.fillRect(0,0,W,H);g.strokeStyle='#3ee37a';g.lineWidth=6;g.strokeRect(3,3,W-6,H-6);
+  g.fillStyle='#3ee37a';g.font='bold 30px ui-monospace,monospace';g.fillText('ЛОТОТРОН',32,60);
+  g.fillStyle='#7fa48d';g.font='13px ui-monospace,monospace';g.fillText('Розіграш для Twitch · Fair CSPRNG',32,82);
+  const odds=h.tot&&h.tt?` (${(h.tt/h.tot*100).toFixed(h.tt/h.tot<.01?2:1)}%)`:'';
+  const finish=()=>{g.fillStyle='#dffbe8';g.font='bold 44px ui-monospace,monospace';g.textAlign='center';g.fillText(h.n.slice(0,20),W/2,292);g.textAlign='left';
+    g.fillStyle='#f5b73a';g.font='20px ui-monospace,monospace';g.fillText('Переможець'+odds,32,342);
+    g.fillStyle='#7fa48d';g.font='13px ui-monospace,monospace';g.fillText(new Date(h.t).toLocaleString('uk-UA')+(chan?' • #'+chan:''),32,368);
+    g.fillStyle='#3ee37a99';g.font='12px ui-monospace,monospace';g.fillText('lototron-site • Cryptographically Fair CSPRNG',W-228,H-24);
+    cv.toBlob(async blob=>{try{if(navigator.clipboard?.write&&window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);toast('Картка переможця скопійована')}else throw 0}
+      catch{const a=el('a');a.href=URL.createObjectURL(blob);a.download='lototron-winner.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3);toast('Буфер зображень недоступний — картка збережена в файл')}},'image/png')};
+  const img=new Image();img.onload=()=>{g.save();g.beginPath();g.arc(W/2,185,72,0,7);g.clip();g.drawImage(img,W/2-72,113,144,144);g.restore();
+    g.strokeStyle='#3ee37a';g.lineWidth=4;g.beginPath();g.arc(W/2,185,72,0,7);g.stroke();finish()};
+  img.onerror=finish;if(u?.av&&/^https:\/\/static-cdn\.jtvnw\.net\//.test(u.av))img.src=u.av;else finish()}catch(e){console.error(e);toast('Не вдалося створити картку')}}
 
 /* ---- twitch chat ---- */
 function connect(){
@@ -408,12 +449,18 @@ function connect(){
   sync();
 }
 function disc(){want=0;pumpEpoch++;clearTimeout(pumpRetryTimer);pumpRetryTimer=0;fq.length=0;ffail=0;const w=ws;ws=null;w?.close()}
+function chatCmd(tx){const c=tx.trim().toLowerCase();
+  if(/^!(spin|крути)/.test(c)){if(!sp)$('#go').click();toast('🎯 Колесо запущено з чату')}
+  else if(/^!(reroll|рерол)/.test(c)){if($('#win').open&&!sp)$('#rr').click();else toast('Спочатку відкрийте діалог переможця')}
+  else if(/^!open/.test(c)){if(!collecting&&(ws||want))$('#open').click();else toast('Спочатку підключіться до каналу')}
+  else if(/^!close/.test(c)){if(collecting)$('#open').click();toast('Набір закрито')}}
 function line(l){
   if(l.startsWith('PING')){ws?.send('PONG :tmi.twitch.tv');return}
   const m=/^(?:@(\S+) )?:(\w+)!\S+ PRIVMSG #\S+ :(.*)$/.exec(l);
   if(!m){if(/ (366|ROOMSTATE) /.test(l)){retry=0;$('#tst').textContent='у мережі: #'+chan;sync();if(!bipd){bipd=1;SFX.on()}}return}
   const t=Object.fromEntries((m[1]||'').split(';').map(x=>x.split(/=(.*)/s).slice(0,2))),b=(t.badges||'').split(',').filter(Boolean).map(x=>x.split('/')[0]),login=m[2],tx=m[3].replace(/^\x01ACTION |\x01$/g,'').trim(),n=t['display-name']||login;
   const roles={sub:+b.includes('subscriber'),vip:+b.includes('vip'),mod:+b.includes('moderator'),artist:+b.includes('artist-badge'),owner:+b.includes('broadcaster'),bot:+BOTS.test(login),badges:b.filter(k=>Object.hasOwn(BD,k))};
+  if((roles.owner||roles.mod)&&/^!(spin|крути|open|close|reroll|рерол)(?![a-z\u0400-\u04FF])/i.test(tx))chatCmd(tx);
   if(t.id){if(seen.has(t.id))return;seen.add(t.id);if(seen.size>300)seen.delete(seen.values().next().value)}
   let u=users.get(login),changed=0;const kw=$('#kw').value.trim().toLowerCase();
   if(!u&&collecting&&!ban.has(n.toLowerCase())&&($('#any').checked||kw&&tx.toLowerCase().split(/\s+/)[0]===kw)){u={n,login,id:t['user-id'],recent:[]};users.set(login,u);db.tape.push(u);fq.push(u);pump();changed=1}
@@ -461,9 +508,11 @@ function list(p){hud(p);const q=$('#lq').value.trim().toLowerCase(),o=$('#lsort'
   $('#cnt').textContent=q?`${a.length}/${p.length}`:p.length;
   const items=a.slice(0,300),sg=st.m+q+o+items.map(x=>x.n+'|'+x.t+'|'+(x.u?.badges||'')).join(';');
   if(sg===listSig)return;listSig=sg;listItems=items;
+  const T=p.reduce((s,x)=>s+x.t,0)||1;
   const ul=$('#list'),prev=new Map(),flip=!calm&&ul.children.length<=150&&items.length<=150;
   if(flip)for(const li of ul.children)prev.set(li.dataset.n,li.getBoundingClientRect());
   ul.replaceChildren(...items.map((x,i)=>{const li=el('li');li.dataset.i=i;li.dataset.n=x.n;li.append(el('span','nm',x.n));
+    li.append(el('small','odds',`${(x.t/T*100).toFixed(x.t/T<.01?2:1)}%`));
     if(x.u)x.u.badges.forEach(k=>li.append(bimg(k)));
     if(st.m==='wheel'){const ti=el('input','ti');ti.type='number';ti.min=1;ti.max=1000;ti.value=x.t;ti.title='Кількість квитків';ti.setAttribute('aria-label','Квитки: '+x.n);li.append(ti)}
     else if(x.t>1)li.append(el('small','','×'+x.t));
@@ -511,7 +560,7 @@ function ctl(p){
   {const b=$('#stopAuto');b.hidden=!elim();b.disabled=!autoRunning;b.style.visibility=autoRunning?'visible':'hidden'}
   $('#clearWinners').disabled=!!sp;
 }
-function refresh(){const p=pool();sp?dirty=1:build(p);list(p);elimUI();counts();ctl(p);save()}
+function refresh(){const p=pool();sp?dirty=1:build(p);list(p);elimUI();counts();podium();ctl(p);save()}
 const TH=[['--bg','Фон'],['--s1','Панель'],['--s2','Поле'],['--tx','Текст'],['--mu','Другорядний текст'],['--ac','Акцент'],['--ac2','Акцент 2'],['--bd','Рамка']];
 const hex6=v=>{v=String(v).trim();if(/^#[0-9a-f]{3}$/i.test(v))v='#'+[...v.slice(1)].map(c=>c+c).join('');return/^#[0-9a-f]{6}$/i.test(v)?v.toLowerCase():'#000000'};
 function ensureCustom(){if(st.custom)return;const cs=getComputedStyle(document.documentElement);st.custom={};TH.forEach(([k])=>st.custom[k]=hex6(cs.getPropertyValue(k)));
@@ -590,15 +639,28 @@ $('#win').addEventListener('click',e=>{if(e.target===$('#win'))$('#win').close()
 $('#list').addEventListener('click',e=>{if(sp)return;const li=e.target.closest('li'),x=e.target.closest('button')&&listItems[+li?.dataset.i];if(!x)return;
   if(st.m==='wheel')db.wheel=db.wheel.filter(y=>y.n!==x.n);else ban.add(x.n.toLowerCase());refresh()});
 $('#list').addEventListener('change',e=>{const inp=e.target.closest('.ti');if(!inp)return;const li=inp.closest('li'),x=listItems[+li?.dataset.i];if(!x)return;if(sp){inp.value=x.t;return}
-  const w=db.wheel.find(y=>y.n===x.n);if(!w)return;const v=Math.max(1,Math.min(1000,Math.floor(+inp.value||1)));inp.value=v;if(v===w.t)return;
+  const w=db.wheel.find(y=>y.n===x.n);if(!w)return;
+  const v=/^\+/.test(inp.value.trim())?Math.min(1000,w.t+Math.floor(+inp.value.trim().slice(1)||0)):Math.floor(+inp.value||1);
+  const nv=Math.max(1,Math.min(1000,v));inp.value=nv;if(nv===w.t)return;
   w.o=w.lt?Math.max(v,(w.o??w.t)+v-w.t):v;w.t=v;refresh()});
 $('#list').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest('.ti')){e.preventDefault();e.target.blur()}});
 $('#hist').addEventListener('click',e=>{if(sp)return;const li=e.target.closest('li'),h=li&&histItems[+li.dataset.i];if(!h)return;
   if(e.target.closest('button')?.textContent==='×'){hist[st.m]=hist[st.m].filter(y=>y!==h);syncWinners();histUI();save()}else if(h.login)showWin(h)});
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;const k=b.dataset.tab;
+  document.querySelectorAll('#tabs button').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))});
+  document.body.dataset.tab=k;if(k==='hist')histUI();if(k==='elim')elimUI()});
+function podium(){const box=$('#podium');if(st.m!=='tape'){box.hidden=true;return}box.hidden=false;
+  box.replaceChildren(...hist.tape.slice(0,5).map(h=>{const li=el('div','pod');li.append(av(users.get(h.login)),el('b','',h.n));return li}))}
 $('#wsec').onchange=e=>{st.reply=Math.max(0,Math.min(3600,Math.floor(+e.target.value||0)));e.target.value=st.reply;save()};
 $('#wrs').onclick=()=>{if(!cur)return;cur.sec=st.reply;cur.dl=st.reply?Date.now()+st.reply*1e3:0;cur.state='wait';renderWin();histUI();save()};
 $('#rr').onclick=()=>{$('#win').close();autoQueued=false;if(cur){if(cur.state==='wait')cur.state='late';ban.add(cur.n.toLowerCase());dirty=1}save();histUI();spin();continueAutoIfQueued()};
+$('#wcard').onclick=()=>{if(!cur)return;drawCard(cur)};
 let rz;const onSize=()=>{clearTimeout(rz);rz=setTimeout(()=>{if(!sp&&st.m==='tape')build(pool())},150)};window.ResizeObserver?new ResizeObserver(onSize).observe($('#tp')):addEventListener('resize',onSize);
+$('#share').onclick=()=>{if(st.m!=='wheel'||!db.wheel.length)return toast('Посилання дійсне для режиму «Колесо Фортуни» із списком учасників');
+  const enc=btoa(unescape(encodeURIComponent(db.wheel.map(x=>x.n+':'+x.t).join('|'))));
+  if(enc.length>1800)return toast('Список занадто довгий для комфортного спільного використання — використовуйте експорт/імпорт');
+  history.replaceState(null,'','#wheel='+enc);
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(location.href).then(()=>toast('Посилання на колесо скопійовано')).catch(()=>toast('Посилання збережено в адресній строці'));else toast('Посилання збережено в адресній строці')};
 $('#exp').onclick=()=>{const a=el('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({v:1,set:{speed:st.speed,theme:st.theme,custom:st.custom,cgSpr:st.cgSpr,spinMode:st.spinMode,roles:st.roles,reply:st.reply,mx:st.mx,mxAll:st.mxAll,mxG:st.mxG,rm:st.rm,keepN:st.keepN,shuf:st.shuf,vol:st.vol,snd:st.snd,resetT:st.resetT},wheel:db.wheel,tape:db.tape,hist,ban:[...ban]})],{type:'application/json'}));a.download='lototron.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)};
 $('#expw').onclick=()=>{const L=hist[st.m];if(!L.length)return toast('Немає переможців для експорту');
   const q=v=>{v=String(v??'');if(/^[=+\-@\t\r]/.test(v))v="'"+v;return`"${v.replace(/"/g,'""')}"`};
@@ -624,7 +686,7 @@ $('#impf').onchange=async e=>{if(sp){e.target.value='';return}const f=e.target.f
 {const t=ls('lt_tw')||{};if(t.ch)$('#ch').value=t.ch;if(t.kw)$('#kw').value=t.kw;if('any' in t)$('#any').checked=!!t.any;
   const sv=()=>ls('lt_tw',{ch:$('#ch').value,kw:$('#kw').value,any:$('#any').checked});['#ch','#kw','#any'].forEach(q=>$(q).addEventListener('change',sv))}
 addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#thDlg').open){e.preventDefault();$('#thDlg').close();$('#thBtn').focus();return}if(e.target.closest?.('input,textarea,select,button,dialog,a,summary,[contenteditable],[tabindex],[role=button]')||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
-  if(e.code==='Space'||k==='enter'){e.preventDefault();spin()}else if(k==='p')$('#pause').click();else if(k==='u')$('#undo').click()});
+  if(e.code==='Space'||k==='enter'){e.preventDefault();spin()}else if(k==='p')$('#pause').click();else if(k==='u')$('#undo').click();else if(k==='f')document.body.classList.toggle('obs')});
 let errT=0;const onErr=e=>{console.error(e.error||e.reason||e);if(Date.now()-errT>1e4){errT=Date.now();toast('Сталася помилка. Якщо щось не працює — оновіть сторінку.')}};addEventListener('error',onErr);addEventListener('unhandledrejection',onErr);
 addEventListener('offline',()=>toast('Немає мережі: чат і аватарки недоступні'));addEventListener('online',()=>toast('Мережу відновлено'));
 addEventListener('pagehide',()=>{want=0;ws?.close();flushSave()});
@@ -661,6 +723,11 @@ document.addEventListener('pointerdown',e=>{if(calm||!e.target.closest?.('button
 let hoverFrame=0,hoverPoint=null;const finePointer=window.matchMedia?.('(hover:hover) and (pointer:fine)');document.addEventListener('pointermove',e=>{if(calm||!finePointer?.matches)return;const c=e.target.closest?.('.card');if(!c)return;hoverPoint={c,x:e.clientX,y:e.clientY};if(!hoverFrame)hoverFrame=requestAnimationFrame(()=>{hoverFrame=0;if(!hoverPoint)return;const {c,x,y}=hoverPoint,r=c.getBoundingClientRect();c.style.setProperty('--mx',x-r.left+'px');c.style.setProperty('--my',y-r.top+'px')})},{passive:true});
 // Pure logic smoke tests for automated browser runners: window.lototronSelfTest()
 window.lototronSelfTest=()=>{const failures=[];const check=(x,m)=>{if(!x)failures.push(m)};check(randInt(1)===0,'RNG bounds');check(frac(-.25)===.75,'Fraction normalization');check(cleanWheel([{n:'Test',t:3,o:4}])[0].t===3,'Wheel validation');check(cleanHist([{n:'T',t:'bad'}]).length===0,'History validation');check(cleanTape([{n:'T',login:'valid_user',badges:['unknown']}])[0].badges.length===0,'Badge validation');return {ok:!failures.length,failures}};
+{const wh=location.hash;if(wh.startsWith('#wheel='))try{const s=decodeURIComponent(escape(atob(wh.slice(7))));const m=new Map();
+  for(const ln of s.split('|')){const[n,q]=ln.split(':');if(n)m.set(n,(m.get(n)||0)+(parseInt(q)||1))}
+  if(m.size){db.wheel=cleanWheel([...m].map(([n,t])=>({n,t,o:t})));undoS.wheel.length=0;bsig='';dirty=1;refresh();toast('Колесо завантажено з посилання')}}catch{}}
+if(/[?&]obs=1/.test(location.search))document.body.classList.add('obs');
+document.body.dataset.tab='list';
 apply();requestAnimationFrame(frame);
 </script>
 </body>
